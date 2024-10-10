@@ -57,11 +57,11 @@ void menor_caminho(int** grafo, int N, int origem){
                     //Transição da minha dp, vejo se esse novo caminho é melhor do que já tenho guardado
 
                     dp[mask + (1<<filho)][filho] = dp[mask][pai] + grafo[pai][filho];
-                    //atualizo minha dp se achei um cara menor
+                    //atualizo minha dp se achei um cara melhor
 
                     mapa[filho][mask+(1<<filho)] = pai;
                     //atualizo meu mapa, pois encontrei quem é o node que
-                    //preciso sair dele, para chegar em uma dada mask
+                    //preciso sair dele, para chegar em uma dada mask,
                     //tendo a menor distância possivel
                 }
             }
@@ -76,7 +76,7 @@ void menor_caminho(int** grafo, int N, int origem){
 
         if(grafo[i][origem] != 0){
         //tenho uma ligação de volta do ultimo que visitei com o primeiro para fechar o ciclo!
-        //vou passar por todos os nodes na mask (2^N - 1), em base 2 : (11...11)
+        //vou usar a mask que passa por todos os nodes na mask (2^N - 1), em base 2 : (11...11)
         //logo, representa o a mask que passei por todos os nodes!
 
             if((dp[(1<<N)-1][i] + grafo[i][origem]) < resp){
@@ -86,14 +86,14 @@ void menor_caminho(int** grafo, int N, int origem){
 
                 resp = dp[(1<<N)-1][i]+ grafo[i][origem];
 
-                //Guardo o meu ultimo no visitado
+                //Guardo o meu ultimo o visitado
                 ultimo = i;
             } 
         } 
     }
 
     int eu = ultimo; //começo pelo ultimo node visitado
-    int mapa_now = (1<<N) - 1; //começo com meu mapa todo vistado
+    int mapa_now = (1<<N) - 1; //começo com a mask de todos vistados
     
     
     printf("%d\n", origem+1);//printo minha origem
@@ -103,10 +103,11 @@ void menor_caminho(int** grafo, int N, int origem){
     while(1){
 
     //a logica se basei em ir de baixo para cima, como guardamos no mapa
-    //quem é o melhor node para chegar em uma dada mask para obter o menor caminho
-    //logo, basta ir quando a mask está toda preenhida e vem quem chega no node ultimo
+    //quem é o melhor node para chegar em uma dada mask, para obter o menor caminho
+    //logo, basta ir quando a mask está toda preenchida e vê quem chega no node ultimo
     //depois, basta apagar esse node que acabamos de sair da mask e olhar na posição
     //de quem chega no ultimo, que é o que estavamos guardado na matriz anterior
+    //Esse ciclo, ira retornar o caminho percorrido
 
         printf(" - %d", mapa[eu][mapa_now] + 1);
         

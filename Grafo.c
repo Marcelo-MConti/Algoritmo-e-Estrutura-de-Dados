@@ -141,17 +141,19 @@ void menor_caminho(GRAFO **distancia, int origem, int N){
    int dp[(1<<N) + 2][N+2];
    //dp[i][j]:
    //estou na mask "i" e o ultimo que visitei foi o "j",
-   //guardo a menor distância até esse node i, passando pela minha mask;
+   //guardo a menor distância até esse node i, passando por todos que estão ativos na minha mask;
 
    for(int i = 0; i < (1<<N); i++){
       for(int j = 0; j<N+1; j++){
-         //Inicializo minha dp com um valor alto, para ser mudado na transição da minha dp
+         //Inicializo minha dp com um valor alto,
+         //Para ser mudado na transição da minha dp
          dp[i][j] = 1e9; 
       }
    }
 
    dp[1<<origem][origem] = 0;
-   //A distância da minha mask com apenas a origem ligada, sendo a minha origem o node que estou, necessáriamente é zero
+   //O ultimo que visitei foi a origem, e só tenho a origem ligada na minha mask
+   //logo, a distância que guardo é ZERO
 
    GRAFO **mapa = alocar_vetor_grafo(N+1); 
    //mapa[filho][MASK] = pai 
@@ -160,10 +162,13 @@ void menor_caminho(GRAFO **distancia, int origem, int N){
       if((mask & (1<<origem)) == 0) continue; //a origem não está ativa -> dou continue
         for(int pai = 0; pai < N; pai++){ //bruto nos pais que estão ligados na mask
             if((mask & (1<<pai)) == 0) continue; //o pai nem está ativo nessa mask -> dou continue
-            for(int filho = 0; filho < N; filho++){ //bruto nos filhos dele
-               if(grafo_busca(distancia[pai], filho) == -1 || (mask & (1<<filho))!= 0) continue; //não tenho ligação desse pai com esse filho OU já visitei esse filho -> Dou Continue
+            for(int filho = 0; filho < N; filho++){ //passo por todos os nodes filhos dele
+
+               if(grafo_busca(distancia[pai], filho) == -1 || (mask & (1<<filho))!= 0) continue;
+               //não tenho ligação desse pai com esse filho OU já visitei esse filho -> Dou Continue 
+
                if(dp[mask][pai] + grafo_busca(distancia[pai], filho) < dp[mask + (1<<filho)][filho]){ //Transição da minha dp
-                  dp[mask + (1<<filho)][filho] = dp[mask][pai] + grafo_busca(distancia[pai], filho); //atualizo minha dp se achei um cara menor
+                  dp[mask + (1<<filho)][filho] = dp[mask][pai] + grafo_busca(distancia[pai], filho); //atualizo minha dp se achei um cara melhor
 
                   if(!grafo_set_chave(mapa[filho], mask+(1<<filho), pai)) grafo_inserir(mapa[filho], mask+(1<<filho), pai);
                   //Se já setei essa pai, na localização (filho, bitmask) da minha matriz eu vou atualizar
@@ -176,7 +181,7 @@ void menor_caminho(GRAFO **distancia, int origem, int N){
    int resp = 1e9; 
    int ultimo;
 
-   //achando a menor distância e o ultimo node que passei nesse caminho
+   //achando a menor distância e o ultimo node que passei pelo meu caminho
    for(int i = 0; i < N; i++){ 
       if(grafo_busca(distancia[i], origem) != -1){ 
          //tenho uma ligação de volta do ultimo que visitei com o primeiro para fechar o ciclo!
@@ -185,9 +190,11 @@ void menor_caminho(GRAFO **distancia, int origem, int N){
 
          if((dp[(1<<N)-1][i] + grafo_busca(distancia[i], origem)) < resp){
             //Acho a menor distância nessa dp que tem todos os bits visitados
-            //lembrando que preciso acrescentar o peso da aresta do ultimo com o primeiro, pois no problema ele precisa voltar para a origem 
+            //lembrando que preciso acrescentar o peso da aresta do ultimo com
+            //o primeiro, pois no problema ele precisa voltar para a origem 
 
             resp = dp[(1<<N)-1][i]+ grafo_busca(distancia[i], origem);
+
             //guardo o ultimo visitado
             ultimo = i;
          } 
@@ -200,17 +207,23 @@ void menor_caminho(GRAFO **distancia, int origem, int N){
    int mapa_now = (1<<N) - 1;
 
    printf("Cidade de Origem: %d\n", origem+1);
-   printf("Rota: %d-%d",origem+1,  eu+1);
+   printf("Rota: %d - %d",origem+1,  eu+1);
 
    //função para printar meu menor caminho
    while(1){
+      //a logica se basei em ir de baixo para cima, como guardamos no mapa
+      //quem é o melhor node para chegar em uma dada mask, para obter o menor caminho
+      //logo, basta ir quando a mask está toda preenchida e vê quem chega no node ultimo
+      //depois, basta apagar esse node que acabamos de encontrar na mask e olhar na posição
+      //de quem chega nesse ultimo, que é o que estavamos guardado na matriz anterior
+      //Esse ciclo de operações, vai retornar o caminho percorrido
 
       if(grafo_busca(mapa[eu], mapa_now) == origem){
-         printf("-%d\n", grafo_busca(mapa[eu], mapa_now) + 1);
+         printf(" - %d\n", grafo_busca(mapa[eu], mapa_now) + 1);
          break;
       }
 
-      printf("-%d", grafo_busca(mapa[eu], mapa_now) + 1);
+      printf(" - %d", grafo_busca(mapa[eu], mapa_now) + 1);
 
       int eu_suporte = eu;
       eu = grafo_busca(mapa[eu], mapa_now);
