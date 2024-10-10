@@ -110,16 +110,6 @@ bool grafo_cheia(GRAFO *grafo){
    return(true);
 }
 
-void grafo_imprimir(GRAFO *grafo){
-   if(!grafo_vazia(grafo)){
-      NO *imprimi = grafo->inicio;
-      while(imprimi != NULL){
-         printf("%d\n", imprimi->chave);
-         imprimi = imprimi->proximo;
-      }
-   }
-}
-
 GRAFO **alocar_vetor_grafo(int n){
    GRAFO **vet_grafo = (GRAFO**) malloc(n * sizeof(GRAFO*));
    if(vet_grafo != NULL){

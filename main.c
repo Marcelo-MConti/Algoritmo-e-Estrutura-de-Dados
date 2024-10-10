@@ -10,6 +10,7 @@ int main(){
     // Numero de nos, começo da viagem, e ligações entre os nos.
     int cidades, origem, ligacoes;
 
+
     scanf("%d %d %d", &cidades, &origem, &ligacoes);
     origem--; // Base zero.
 
