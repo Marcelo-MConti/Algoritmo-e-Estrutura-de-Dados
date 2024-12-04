@@ -7,8 +7,7 @@ typedef struct set SET;
 
 enum set_type {
     SET_AVL,
-    SET_RB,
-    SET_MAX
+    SET_RB
 };
 
 SET *set_new(enum set_type type);

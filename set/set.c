@@ -33,3 +33,31 @@ SET *set_new(enum set_type type)
 
     return set;
 }
+
+bool set_insert(SET *set, int value)
+{
+    if (!set)
+        return false;
+
+    switch (set->type) {
+        case SET_AVL:
+            /* ... */
+            return false;
+        case SET_RB:
+            return rb_tree_insert(set->impl.rb, value);
+    }
+}
+
+SET *set_union(SET *a, SET *b)
+{
+    if (!a || !b)
+        return NULL;
+}
+
+SET *set_intersection(SET *a, SET *b)
+{
+    if (!a || !b)
+        return NULL;
+
+    /* Fixaremos `a` como o conjunto com a menor quantidade de elementos */
+}
