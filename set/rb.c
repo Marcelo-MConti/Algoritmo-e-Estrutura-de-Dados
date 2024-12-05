@@ -16,7 +16,7 @@
 
 #define PR_WS(n)                                                                         \
     do {                                                                                 \
-        for (int i = 0; i < n; i++)                                                      \
+        for (int _ = 0; _ < (n); _++)                                                    \
             fputc(' ', stdout);                                                          \
     } while (0)
 
@@ -148,6 +148,10 @@ bool rb_tree_insert(RB_TREE *tree, int value)
     return inserted;
 }
 
+static RB_NODE *rb_remove_impl(RB_NODE *root, int value)
+{
+}
+
 bool rb_tree_remove(RB_TREE *tree, int value)
 {
 }
@@ -202,20 +206,6 @@ static int rb_subtree_get_height(RB_NODE *root)
     return MAX(height_left, height_right) + 1;
 }
 
-static void rb_print_node(RB_NODE *node, int n_digits)
-{
-    if (!node) {
-        PR_WS(n_digits);
-
-        return;
-    }
-
-    if (node->is_red)
-        printf(COLOR_RED "%*d" COLOR_RESET, n_digits, node->value);
-    else
-        printf(COLOR_BLACK "%*d" COLOR_RESET, n_digits, node->value);
-}
-
 static void rb_free_impl(RB_NODE *root)
 {
     if (!root)
@@ -239,6 +229,19 @@ void rb_tree_free(RB_TREE **tree)
 }
 
 /* XXX: debugging stuff */
+static void rb_print_node(RB_NODE *node, int n_digits)
+{
+    if (!node) {
+        PR_WS(n_digits);
+        return;
+    }
+
+    if (node->is_red)
+        printf(COLOR_RED "%*d" COLOR_RESET, n_digits, node->value);
+    else
+        printf(COLOR_BLACK "%*d" COLOR_RESET, n_digits, node->value);
+}
+
 void rb_tree_print(RB_TREE *tree)
 {
     if (!tree || !tree->root)
@@ -256,10 +259,7 @@ void rb_tree_print(RB_TREE *tree)
 
     int n_digits = MAX(N_DIG(tree->min), N_DIG(tree->max));
 
-    int n_space_total = (1 << height) * (2 * n_digits + 1);
-    int n_space_between = (n_space_total - n_digits) / 2;
-
-    PR_WS(n_space_between - 1);
+    PR_WS(((1 << height) - 1) * n_digits);
     rb_print_node(tree->root, n_digits);
 
     fputc('\n', stdout);
@@ -281,10 +281,14 @@ void rb_tree_print(RB_TREE *tree)
         start = new_start;
         end = new_end;
 
-        int n_space_between = (n_space_total - (1 << i) * n_digits) / ((1 << i) + 1);
+        int n_space_around = ((1 << (height - i)) - 1) * n_digits;
 
         for (int k = 0; k < (end - start + max_nodes) % max_nodes; k++) {
-            PR_WS(n_space_between);
+            if (k == 0)
+                PR_WS(n_space_around);
+            else
+                PR_WS(2 * n_space_around + n_digits);
+
             rb_print_node(deque[(start + k) % max_nodes], n_digits);
         }
 
