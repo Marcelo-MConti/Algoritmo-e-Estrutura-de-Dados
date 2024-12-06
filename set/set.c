@@ -13,6 +13,11 @@ struct set {
     } impl;
 };
 
+struct set_intersection_ctx {
+    SET *new;
+    SET *old;
+};
+
 SET *set_new(enum set_type type)
 {
     SET *set = malloc(sizeof *set);
@@ -48,10 +53,40 @@ bool set_insert(SET *set, int value)
     }
 }
 
+bool set_contains(SET *set, int value)
+{
+    switch (set->type) {
+        case SET_AVL:
+            /* ... */
+            return false;
+        case SET_RB:
+            return rb_tree_search(set->impl.rb, value);
+    }
+}
+
+static size_t set_len(SET *set)
+{
+    switch (set->type) {
+        case SET_AVL:
+            /* ... */
+            return 0;
+        case SET_RB:
+            return rb_tree_len(set->impl.rb);
+    }
+}
+
 SET *set_union(SET *a, SET *b)
 {
     if (!a || !b)
         return NULL;
+}
+
+static void set_intersection_cb(int value, void *ctx)
+{
+    struct set_intersection_ctx *sets = ctx;
+
+    if (set_contains(sets->old, value))
+        set_insert(sets->new, value);
 }
 
 SET *set_intersection(SET *a, SET *b)
@@ -60,4 +95,30 @@ SET *set_intersection(SET *a, SET *b)
         return NULL;
 
     /* Fixaremos `a` como o conjunto com a menor quantidade de elementos */
+    size_t len_a = set_len(a);
+    size_t len_b = set_len(b);
+
+    if (len_b < len_a) {
+        SET *c = a;
+        a = b;
+        b = c;
+    }
+
+    SET *c = set_new(a->type);
+
+    struct set_intersection_ctx ctx = {
+        .old = b,
+        .new = c,
+    };
+
+    switch (a->type) {
+        case SET_AVL:
+            /* ... */
+            break;
+        case SET_RB:
+            rb_tree_traverse(a->impl.rb, set_intersection_cb, &ctx);
+            break;
+    }
+
+    return c;
 }
