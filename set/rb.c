@@ -4,6 +4,9 @@
 
 #include "rb.h"
 
+#define BLACK(x) (!(x) || !(x)->is_red)
+#define BLACK_NONNULL(x) ((x) && !(x)->is_red)
+
 #define RED(x) ((x) && (x)->is_red)
 
 /* XXX: debugging stuff */
@@ -102,6 +105,20 @@ static RB_NODE *rb_rotate_right(RB_NODE *node)
     return left;
 }
 
+static RB_NODE *rb_fixup(RB_NODE *root)
+{
+    if (RED(root->right) && BLACK(root->left))
+        root = rb_rotate_left(root);
+
+    if (RED(root->left) && RED(root->left->left))
+        root = rb_rotate_right(root);
+
+    if (RED(root->left) && RED(root->right))
+        rb_invert(root);
+
+    return root;
+}
+
 static RB_NODE *rb_insert_impl(RB_NODE *root, int value, bool *inserted)
 {
     if (!root) {
@@ -114,16 +131,7 @@ static RB_NODE *rb_insert_impl(RB_NODE *root, int value, bool *inserted)
     else if (value > root->value)
         root->right = rb_insert_impl(root->right, value, inserted);
 
-    if (RED(root->right) && !RED(root->left))
-        root = rb_rotate_left(root);
-
-    if (RED(root->left) && RED(root->left->left))
-        root = rb_rotate_right(root);
-
-    if (RED(root->left) && RED(root->right))
-        rb_invert(root);
-
-    return root;
+    return rb_fixup(root);
 }
 
 bool rb_tree_insert(RB_TREE *tree, int value)
@@ -148,12 +156,114 @@ bool rb_tree_insert(RB_TREE *tree, int value)
     return inserted;
 }
 
-static RB_NODE *rb_remove_impl(RB_NODE *root, int value)
+static RB_NODE *rb_propagate_left(RB_NODE *root)
 {
+    rb_invert(root);
+
+    if (root->right && RED(root->right->left)) {
+        root->right = rb_rotate_right(root->right);
+        root = rb_rotate_left(root);
+
+        rb_invert(root);
+    }
+
+    return root;
+}
+
+static RB_NODE *rb_propagate_right(RB_NODE *root)
+{
+    rb_invert(root);
+
+    if (root->left && RED(root->left->left)) {
+        root = rb_rotate_right(root);
+        rb_invert(root);
+    }
+
+    return root;
+}
+
+static void rb_move_min(RB_NODE *node, RB_NODE *subtree)
+{
+    RB_NODE *min = subtree;
+
+    while (min->left)
+        min = min->left;
+
+    node->value = min->value;
+}
+
+static RB_NODE *rb_remove_impl(RB_NODE *root, int value, bool *removed)
+{
+    if (!root)
+        return NULL;
+
+    bool remove_min_right = false;
+
+    if (value == root->value) {
+        RB_NODE *orphan = NULL;
+
+        if (root->right && root->left) {
+            rb_move_min(root, root->right);
+            remove_min_right = true;
+        } else if (root->right) {
+            orphan = root;
+            root = root->right;
+
+            if (root)
+                root->is_red = orphan->is_red;
+
+            *removed = true;
+        } else {
+            orphan = root;
+            root = root->left;
+
+            if (root)
+                root->is_red = orphan->is_red;
+
+            *removed = true;
+        }
+
+        free(orphan);
+    }
+
+    if (!root)
+        return NULL;
+
+    if (value > root->value || remove_min_right) {
+        if (RED(root->left))
+            root = rb_rotate_right(root);
+
+        if (!remove_min_right && BLACK_NONNULL(root->right) && BLACK(root->right->left))
+            root = rb_propagate_right(root);
+
+        if (remove_min_right)
+            root->right = rb_remove_impl(root->right, root->value, removed);
+        else
+            root->right = rb_remove_impl(root->right, value, removed);
+    } else if (value < root->value) {
+        if (BLACK_NONNULL(root->left) && BLACK(root->left->left))
+            root = rb_propagate_left(root);
+
+        root->left = rb_remove_impl(root->left, value, removed);
+    }
+
+    return rb_fixup(root);
 }
 
 bool rb_tree_remove(RB_TREE *tree, int value)
 {
+    if (!tree)
+        return false;
+
+    bool removed = false;
+
+    tree->root = rb_remove_impl(tree->root, value, &removed);
+    tree->root->is_red = false;
+
+    if (removed)
+        tree->size--;
+
+    return removed;
 }
 
 static RB_NODE *rb_search_impl(RB_NODE *root, int value)
@@ -195,13 +305,13 @@ void rb_tree_traverse(RB_TREE *tree, void (*cb)(int, void *), void *ctx)
     rb_traverse_impl(tree->root, cb, ctx);
 }
 
-static int rb_subtree_get_height(RB_NODE *root)
+static int rb_height(RB_NODE *root)
 {
     if (!root)
         return -1;
 
-    int height_left = rb_subtree_get_height(root->left);
-    int height_right = rb_subtree_get_height(root->right);
+    int height_left = rb_height(root->left);
+    int height_right = rb_height(root->right);
 
     return MAX(height_left, height_right) + 1;
 }
@@ -242,12 +352,15 @@ static void rb_print_node(RB_NODE *node, int n_digits)
         printf(COLOR_BLACK "%*d" COLOR_RESET, n_digits, node->value);
 }
 
-void rb_tree_print(RB_TREE *tree)
+void rb_tree_print(RB_TREE *tree, void *root)
 {
+    if (!root)
+        root = tree->root;
+
     if (!tree || !tree->root)
         return;
 
-    int height = rb_subtree_get_height(tree->root);
+    int height = rb_height(root);
     size_t max_nodes = (1 << (height + 1)) - 1;
 
     RB_NODE **deque = malloc(sizeof *deque * max_nodes);
@@ -255,12 +368,12 @@ void rb_tree_print(RB_TREE *tree)
     size_t start = 0;
     size_t end = 0;
 
-    deque[end++] = tree->root;
+    deque[end++] = root;
 
     int n_digits = MAX(N_DIG(tree->min), N_DIG(tree->max));
 
     PR_WS(((1 << height) - 1) * n_digits);
-    rb_print_node(tree->root, n_digits);
+    rb_print_node(root, n_digits);
 
     fputc('\n', stdout);
 

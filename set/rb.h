@@ -16,7 +16,7 @@ void rb_tree_traverse(RB_TREE *, void (*cb)(int value, void *ctx), void *ctx);
 void rb_tree_free(RB_TREE **);
 
 /* XXX: debugging stuff */
-void rb_tree_print(RB_TREE *);
+void rb_tree_print(RB_TREE *, void *);
 
 #endif
 
