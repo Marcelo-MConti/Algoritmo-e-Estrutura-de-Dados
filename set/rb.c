@@ -216,22 +216,18 @@ static RB_NODE *rb_remove_impl(RB_NODE *root, int value, bool *removed)
         } else if (root->right) {
             orphan = root;
             root = root->right;
-
-            if (root)
-                root->is_red = orphan->is_red;
-
-            *removed = true;
         } else {
             orphan = root;
             root = root->left;
+        }
 
+        if (orphan) {
             if (root)
                 root->is_red = orphan->is_red;
 
             *removed = true;
+            free(orphan);
         }
-
-        free(orphan);
     }
 
     if (!root)
