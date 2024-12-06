@@ -37,7 +37,7 @@ typedef struct rb_node {
 
 struct rb_tree {
     RB_NODE *root;
-    size_t size;
+    size_t len;
 
     /* XXX: debugging stuff */
     int min, max;
@@ -48,12 +48,20 @@ RB_TREE *rb_tree_new(void)
     RB_TREE *tree = malloc(sizeof *tree);
 
     tree->root = NULL;
-    tree->size = 0;
+    tree->len = 0;
 
     tree->min = INT_MAX;
     tree->max = INT_MIN;
 
     return tree;
+}
+
+size_t rb_tree_len(RB_TREE *tree)
+{
+    if (!tree)
+        return 0;
+
+    return tree->len;
 }
 
 static RB_NODE *rb_node_new(int value)
@@ -151,7 +159,7 @@ bool rb_tree_insert(RB_TREE *tree, int value)
         tree->min = value;
 
     if (inserted)
-        tree->size++;
+        tree->len++;
 
     return inserted;
 }
@@ -261,7 +269,7 @@ bool rb_tree_remove(RB_TREE *tree, int value)
     tree->root->is_red = false;
 
     if (removed)
-        tree->size--;
+        tree->len--;
 
     return removed;
 }
@@ -305,17 +313,6 @@ void rb_tree_traverse(RB_TREE *tree, void (*cb)(int, void *), void *ctx)
     rb_traverse_impl(tree->root, cb, ctx);
 }
 
-static int rb_height(RB_NODE *root)
-{
-    if (!root)
-        return -1;
-
-    int height_left = rb_height(root->left);
-    int height_right = rb_height(root->right);
-
-    return MAX(height_left, height_right) + 1;
-}
-
 static void rb_free_impl(RB_NODE *root)
 {
     if (!root)
@@ -339,6 +336,17 @@ void rb_tree_free(RB_TREE **tree)
 }
 
 /* XXX: debugging stuff */
+static int rb_height(RB_NODE *root)
+{
+    if (!root)
+        return -1;
+
+    int height_left = rb_height(root->left);
+    int height_right = rb_height(root->right);
+
+    return MAX(height_left, height_right) + 1;
+}
+
 static void rb_print_node(RB_NODE *node, int n_digits)
 {
     if (!node) {
