@@ -75,10 +75,38 @@ static size_t set_len(SET *set)
     }
 }
 
+static void set_union_cb(int value, void *ctx)
+{
+    SET *set = ctx;
+    set_insert(set, value);
+}
+
 SET *set_union(SET *a, SET *b)
 {
     if (!a || !b)
         return NULL;
+
+    SET *c = set_new(a->type);
+
+    switch (a->type) {
+        case SET_AVL:
+            /* ... */
+            break;
+        case SET_RB:
+            rb_tree_traverse(a->impl.rb, set_union_cb, c);
+            break;
+    }
+
+    switch (b->type) {
+        case SET_AVL:
+            /* ... */
+            break;
+        case SET_RB:
+            rb_tree_traverse(b->impl.rb, set_union_cb, c);
+            break;
+    }
+
+    return c;
 }
 
 static void set_intersection_cb(int value, void *ctx)
