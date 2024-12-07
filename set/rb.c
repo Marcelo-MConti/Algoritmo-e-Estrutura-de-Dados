@@ -235,16 +235,16 @@ static RB_NODE *rb_remove_impl(RB_NODE *root, int value, bool *removed)
         return NULL;
 
     if (value > root->value || remove_min_right) {
+        if (remove_min_right)
+            value = root->value;
+
         if (RED(root->left))
             root = rb_rotate_right(root);
 
         if (BLACK_NONNULL(root->right) && BLACK(root->right->left))
             root = rb_propagate_right(root);
 
-        if (remove_min_right)
-            root->right = rb_remove_impl(root->right, root->value, removed);
-        else
-            root->right = rb_remove_impl(root->right, value, removed);
+        root->right = rb_remove_impl(root->right, value, removed);
     } else if (value < root->value) {
         if (BLACK_NONNULL(root->left) && BLACK(root->left->left))
             root = rb_propagate_left(root);
@@ -263,7 +263,9 @@ bool rb_tree_remove(RB_TREE *tree, int value)
     bool removed = false;
 
     tree->root = rb_remove_impl(tree->root, value, &removed);
-    tree->root->is_red = false;
+
+    if (tree->root)
+        tree->root->is_red = false;
 
     if (removed)
         tree->len--;
