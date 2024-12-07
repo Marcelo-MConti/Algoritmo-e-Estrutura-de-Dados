@@ -237,7 +237,7 @@ static RB_NODE *rb_remove_impl(RB_NODE *root, int value, bool *removed)
         if (RED(root->left))
             root = rb_rotate_right(root);
 
-        if (!remove_min_right && BLACK_NONNULL(root->right) && BLACK(root->right->left))
+        if (BLACK_NONNULL(root->right) && BLACK(root->right->left))
             root = rb_propagate_right(root);
 
         if (remove_min_right)
