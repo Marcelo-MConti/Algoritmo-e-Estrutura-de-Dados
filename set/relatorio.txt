@@ -1,0 +1,44 @@
+Projeto II --- Operações sobre conjuntos (sets)
+
+Introdução
+
+Conjuntos podem ser compreeendidos como uma coleção abstrata de elementos
+que não possui uma ordem específica e permite operações como inserção,
+remoção, união e interseção. Nesse projeto foi implementado um conjunto 
+capaz de guardar como elementos números inteiros, sendo possível ao usuário
+escolher uma dentre duas estruturas de dados para servir de implementação
+do conjunto. 
+
+Implementação
+
+Para representar os conjuntos, decidimos usar árvores binárias de busca (ABBs)
+do tipo AVL e LLRB (left-leaning red-black tree). Dessa forma, as árvores se
+mantém balanceadas de acordo com as regras de balanceamento para cada tipo de
+árvore, garantido que a altura das árvores será sempre limitada superiormente
+por um certo fator (um múltiplo constante de log n, sendo n a quantidade de 
+elementos), permitindo a implementação das operações de modo eficiente.
+
+Para manter o balanceamento das árvores AVL, as operações rotação simples 
+para a esquerda/direita e rotação dupla direita-esquerda/esquerda-direita
+são utilizadas. Já para a LLRB, as operações usadas são rotação para a 
+esquerda/direita e inversão de cores (na inserção e remoção), bem como 
+propagação de cor para a esquerda/direita (apenas na remoção).
+
+Além das operações mais convencionais em ABBs, também foram implementadas
+as operações juntar/catenar (*join*/*catenate*) e separar (*split*), essas
+duas apenas para a árvore AVL, visto que adaptar a implementação abordada 
+para a LLRB seria um processo não trivial. Essas operações permitem a 
+implementação da operação união de modo mais eficiente comparado à 
+implementação "ingênua" de união entre ABBs[1][2].
+
+Análise de Complexidade
+
+
+
+Referências
+
+[1]: BLELLOCH, G. E.; FERIZOVIC, D.; YIHAN, S. Just Join for Parallel Ordered Sets.
+Disponível em: https://www.cs.cmu.edu/~guyb/papers/BFS16.pdf
+
+[2]: WEIN, R. Efficient Implementation of Red-Black Trees with Split and Catenate Operations.
+Disponível em: https://web.archive.org/web/20120309154420/http://www.cs.tau.ac.il/~wein/publications/pdfs/rb_tree.pdf
