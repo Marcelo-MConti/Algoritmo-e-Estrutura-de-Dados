@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "rb.h"
@@ -29,7 +30,7 @@ SET *set_new(enum set_type type)
 
     switch (set->type) {
         case SET_AVL:
-            set->impl.avl = avl_tree_new();
+            // set->impl.avl = avl_tree_new();
             break;
         case SET_RB:
             set->impl.rb = rb_tree_new();
@@ -50,6 +51,20 @@ bool set_insert(SET *set, int value)
             return false;
         case SET_RB:
             return rb_tree_insert(set->impl.rb, value);
+    }
+}
+
+bool set_remove(SET *set, int value)
+{
+    if (!set)
+        return false;
+
+    switch (set->type) {
+        case SET_AVL:
+            /* ... */
+            return false;
+        case SET_RB:
+            return rb_tree_remove(set->impl.rb, value);
     }
 }
 
@@ -149,4 +164,43 @@ SET *set_intersection(SET *a, SET *b)
     }
 
     return c;
+}
+
+void set_print_cb(int value, void *ctx)
+{
+    printf("%d, ", value);
+}
+
+void set_print(SET *set)
+{
+    if (!set)
+        return;
+
+    switch (set->type) {
+        case SET_AVL:
+            /* ... */
+            break;
+        case SET_RB:
+            rb_tree_traverse(set->impl.rb, set_print_cb, NULL);
+            break;
+    }
+
+    fputc('\n', stdout);
+}
+
+void set_free(SET **set)
+{
+    if (!set || !*set)
+        return;
+    
+    switch ((*set)->type) {
+        case SET_AVL:
+            // avl_tree_free(&(*set)->impl.avl);
+            break;
+        case SET_RB:
+            rb_tree_free(&(*set)->impl.rb);
+            break;
+    }
+
+    *set = NULL;
 }
