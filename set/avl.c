@@ -498,3 +498,64 @@ void avl_tree_free(AVL_TREE **tree)
     free(*tree);
     *tree = NULL;
 }
+
+void swap_max_left(AVL_NODE *swap, AVL_NODE *root, AVL_NODE *before){
+    if(swap->right != NULL){
+        swap_max_left(swap->right, root, swap);
+        return;
+    }
+    if(root == before){
+        before->left = swap->left;
+    }else{
+        before->right = swap->left;
+    }
+    root->value = swap->value;
+    free(swap);
+    swap = NULL;
+}
+
+AVL_NODE *avl_tree_remove_aux(AVL_NODE **root, int value){
+    if(*root == NULL) return NULL; //se cheguei em um cara NULL, logo, não achei o valor
+    else if(value == (*root)->value){ //encontrei o valor desejado
+
+        if((*root)->left == NULL || (*root)->right == NULL){
+            //1º e 2º caso, qnd nó encontrado é uma folha ou só tem um filho
+            AVL_NODE *aux = *root;
+
+            if((*root)->left == NULL){
+                *root = (*root)->right;
+            }else{
+                *root = (*root)->left;
+            }
+            free(aux);
+            aux = NULL;
+
+        }else{ //caso 3, vc tem ambos os filhos
+            swap_max_left((*root)->left, (*root), (*root));
+        }
+        
+    }else if(value < (*root)->value){ 
+        //se minha chave procurada é menor que meu node atual
+        //logo, vou para a esquerda
+        (*root)->left = avl_tree_remove_aux(&(*root)->left, value);
+
+    }else if(value > (*root)->value){
+        //se minha chave procurada é maior que meu node atual
+        //logo, vou para a direita
+        (*root)->right = avl_tree_remove_aux(&(*root)->right, value);
+    }
+
+    if(*root != NULL){
+        int FB = avl_height((*root)->left) - avl_height((*root)->right);
+        if(FB == 2){
+            if(avl_height(()))
+        }
+    }
+}
+
+bool avl_tree_remove(AVL_TREE *T, int value){
+    if(T == NULL) return false; //árvore inexistente
+    T->root = avl_remover_aux(&T->root, value);
+    if(T->root == NULL) return false; //se retorna NULL, logo, não consegui tirar esse node, return false
+    return true;
+}
