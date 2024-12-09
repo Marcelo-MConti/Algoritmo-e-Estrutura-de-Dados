@@ -1,15 +1,15 @@
 Projeto II --- Operações sobre conjuntos (sets)
 
-Introdução
+# Introdução
 
 Conjuntos podem ser compreeendidos como uma coleção abstrata de elementos
 que não possui uma ordem específica e permite operações como inserção,
-remoção, união e interseção. Nesse projeto foi implementado um conjunto 
-capaz de guardar como elementos números inteiros, sendo possível ao usuário
-escolher uma dentre duas estruturas de dados para servir de implementação
-do conjunto. 
+remoção, união e interseção, bem como verificação de pertencimento. Nesse
+projeto foi implementado um conjunto capaz de guardar como elementos números
+inteiros, sendo possível ao usuário escolher uma dentre duas estruturas de 
+dados para servir de implementação do conjunto. 
 
-Implementação
+# Implementação
 
 Para representar os conjuntos, decidimos usar árvores binárias de busca (ABBs)
 do tipo AVL e LLRB (left-leaning red-black tree). Dessa forma, as árvores se
@@ -27,13 +27,137 @@ propagação de cor para a esquerda/direita (apenas na remoção).
 Além das operações mais convencionais em ABBs, também foram implementadas
 as operações juntar/catenar (*join*/*catenate*) e separar (*split*), essas
 duas apenas para a árvore AVL, visto que adaptar a implementação abordada 
-para a LLRB seria um processo não trivial. Essas operações permitem a 
-implementação da operação união de modo mais eficiente comparado à 
-implementação "ingênua" de união entre ABBs[1][2].
+para a LLRB seria um processo não trivial, envolvendo decisões de projeto
+mais complexas, como decidir se um nó deveria ou não armazenar sua altura
+negra. As operações mencionadas permitem a implementação da operação união
+de modo mais eficiente comparado à implementação "ingênua" de união entre
+ABBs[1][2].
 
-Análise de Complexidade
+Um detalhe importante para a nossa implementação é que os valores armazenados
+em cada nó da árvore correspondem diretamente às chaves usadas para ordenação
+da ABB. Caso não houvesse essa correspondência, seria necessário adaptar os
+algoritmos *join* e *split* apresentados. Além disso, nossa implementação
+assume e mantém a invariante de unicidade das chaves.
 
+# Análise de Complexidade
 
+## Árvores binárias de busca (ABBs)
+
+Árvores AVL e rubro-negras são árvores binárias de busca, logo, a complexidade
+de tempo para a operação busca será a mesma em ambas. A operação busca é
+usada para implementar verificação de pertencimento em um conjunto. Uma 
+implementação convencional, recursiva, de busca em ABB consiste de uma
+verificação para tratar o caso onde se chega a um nó nulo ou um nó com o valor
+desejado. Caso nenhum desses dois casos seja atingido, a busca prossegue pela
+esquerda ou pela direita. No pior caso, a busca terminará em um nó nulo, sem
+encontrar o valor desejado. Portanto, podemos montar a seguinte relação de 
+recorrência para descrever a complexidade dessa operação:
+
+                           T(n) = T(n/2) + O(1)
+
+Pelo Teorema Mestre, sabemos que T(n) = O(log n).
+
+Além disso, as operações inserção e remoção também podem ser analisadas em suas
+formas mais simples, apenas para ABBs, para que depois sejam abordadas em mais
+detalhes considerando as operações de balanceamento das árvores AVL e LLRB.
+
+A operação inserção em uma ABB consiste em realizar uma busca pelo valor a ser
+inserido. Caso o valor já exista na árvore, não há nada a ser feito. Caso não 
+exista, deve ser inserido na posição atual. A inserção é, novamente, uma simples
+manipulação de ponteiros; se o local de inserção já for conhecido de antemão,
+a inserção pode ser realizada em O(1). Portanto, a inserção tem complexidade
+de tempo de O(log n).
+
+Por sua vez, a operação remoção consiste em buscar o valor a ser removido. Se o
+valor não for encontrado, não há nada a ser feito (caso i). Se o nó correspondente 
+tiver um filho, esse nó é removido da árvore e substituído por seu filho (caso ii).
+Se tiver dois filhos, devemos substituí-lo por um sucessor na árvore, seja esse o
+menor da subárvore direita ou o maior da subárvore direita (caso iii).
+
+Nos casos i. e ii., as operações de remoção tem complexidade de tempo constante 
+ao se fixar a posição de remoção. No caso iii., podemos notar que a substituição
+pelo sucessor se dá também em O(1) e que a soma da profundidade do nó a ser removido
+com a altura do seu sucessor na subárvore escolhida deve ser igual à altura da árvore
+original. Portanto, em todos os casos, a complexidade da operação remoção é O(log n).
+
+## Árvores AVL
+
+A operação rotação esquerda (`avl_rotate_left`) apresenta complexidade de 
+tempo da ordem de O(1), uma vez que é composta de apenas duas atribuições simples
+de ponteiros e mais duas atribuições para atualizar a altura dos nós envolvidos
+na rotação. A operação rotação direita é análoga (simétrica), enquanto as rotações
+duplas são apenas duas rotações simples aplicadas em sequência. Portanto, a
+complexidade de tempo de todas essas operações é O(1).
+
+A operação inserção em AVL consiste de inserção em uma ABB convencional, porém com
+cálculo da altura e do fator de balanceamento do nó atual, seguido de rotações, na
+volta da recursão, se for necessário, para corrigir casos de desbalanceamento.
+As verificações e cálculos realizados são efetuados em O(1), logo a complexidade
+de inserção em árvores AVL é O(log n).
+
+A remoção em árvores AVL é idêntica à remoção em ABBs, com o mesmo procedimento para 
+corrigir desbalanceamentos na volta da recursão. Logo, a sua complexidade é O(log n).
+
+Além disso, mencionaremos as operações *join* e *split*, que foram implementadas para
+a árvore AVL. Essas operações permitem a implementação da operação união entre duas 
+árvores de tamanho m e n, sendo n > m, em O(n + m) em vez de O((n + m) * log(n + m)). 
+Ao passo que [1] encontra um limitante superior ainda melhor, não iremos explorar essa
+possibilidade pelos seguintes motivos:
+
+ - As técnicas usadas para análise de complexidade necessárias para obtenção desses 
+ limitantes melhores são muito complexas para serem abordadas nesse relatório.
+
+ - As operações *join* e *split* são destrutivas, logo, considerando as restrições dadas 
+ nas especificações do projeto (a operação união deve retornar um novo conjunto, preservando 
+ os conjuntos de entrada), se torna necessário clonar as árvores de entrada antes de
+ realizar a união. Dessa forma, a melhor complexidade que poderia ser obtida é O(n + m),
+ que é a complexidade dessa operação de clonagem.
+
+A operação *join* é definida da seguinte forma: sejam T1 e T2 ABBs e k uma chave tal que
+T1 < k < T2. Ou seja, todos os valores em T1 são menores do que k e todos os valores em T2
+são maiores do que k. join(T1, k, T2) retorna uma árvore T = T1 ∪ {k} ∪ T2. Sua implementação
+é trivial em uma ABB convencional, porém se torna um pouco mais complicada quando se deseja 
+que a árvore resultante se mantenha balanceada. A ideia por trás é percorrer a árvore de maior
+altura dentre T1 e T2, na direção em que as chaves se "aproximam" de k. Ao encontrar um nó, digamos, 
+v, nessa árvore, que possui altura h + 1, onde h é a altura da menor árvore, podemos inserir um nó 
+"k" como filho desse nó encontrado, tornando o filho original de v um dos filhos de k e a raiz da
+outra árvore o outro filho de k. Após essa inserção, ajustes necessários para manter o balanceamento
+da árvore são feitos na volta da recursão, em O(1).
+
+Uma vez que a operação *join* foi implementada recursivamente, podemos montar a seguinte relação
+de recorrência:
+
+                                    T(n) = T(n/2) + O(1)
+
+Novamente, obtemos pelo Teorema Mestre que a complexidade de tempo da operação *join* é O(log n).
+
+Por sua vez, a operação *split* é definida da seguinte forma: split(T, k) retorna duas árvores, T1
+e T2, onde T1 < k < T2, além de indicar se k estava presente em T ou não. A ideia por trás é
+realizar uma busca de k em T. Os nós percorridos nessa busca efetivamente separam a árvore em duas:
+um conjunto de nós que se encontram à esquerda de algum nó percorrido durante a busca
+
+## LLRB
+
+A operação rotação esquerda em LLRBs também consiste de atribuições simples de ponteiros,
+adicionalmente realizando atribuições para as cores dos nós para corrigir as cores após a
+rotação. Esse procedimento é realizado em O(1). A rotação direita é análoga. A operação
+inversão de cor consiste de três verificações e três atribuições simples, sendo também da
+ordem de O(1).
+
+A inserção em LLRBs é idêntica à inserção em ABBs, com a adição de três verificações
+para corrigir casos que violem as regras de balanceamento da LLRB, portanto apresenta
+a mesma complexidade de tempo. Por sua vez, a remoção possui verificações adicionais 
+para o caso em que a busca prossegue para a direita ou para a esquerda, uma vez que é
+necessário "propagar" as arestas vermelhas para o nó folha a ser removido. Essas verificações,
+novamente, são da ordem de O(1).
+
+ ** Detalhes
+
+É importante ressaltar que há algumas diferenças mais sutis entre a árvore AVL e a LLRB,
+que não são refletidas nas complexidades de tempo de suas operações: a altura máxima que
+uma árvore AVL pode atingir é logφ(n) ≈ 1,44 * log2(n), enquanto a altura máxima para uma
+árvore LLRB é 2 * log2(n). Ou seja, a árvore AVL é uma opção melhor para casos em que
+buscas são realizadas frequentemente.
 
 Referências
 
