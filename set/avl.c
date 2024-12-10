@@ -500,62 +500,121 @@ void avl_tree_free(AVL_TREE **tree)
 }
 
 void swap_max_left(AVL_NODE *swap, AVL_NODE *root, AVL_NODE *before){
-    if(swap->right != NULL){
+
+    if(swap->right != NULL){ 
+        //se ainda não cheguei em um node que não tem filho pela direita, ou seja,
+        //ainda não cheguei no maior node que está na esquerda
+        //continuo minha recursão
         swap_max_left(swap->right, root, swap);
         return;
     }
-    if(root == before){
+
+    if(root == before){ 
+        //se minha raiz é igual o meu anterior
+        //logo, eu já chamei a função e cheguei no caso em que meu filho esquerdo
+        //já é o meu maior filho da esquerda
+
         before->left = swap->left;
+        //troco a ligação da minha raiz com o filho esquerdo de quem quero trocar
     }else{
+        //caso não caia no caso especificado anteriormente
+
         before->right = swap->left;
+        //troco o filho do meu node anterior de quem eu vou trocar
+        //com o filho esquerdo de quem quero trocar
+
     }
+    //mudo os valores 
     root->value = swap->value;
+    //dou free no node que quero tirar
     free(swap);
     swap = NULL;
 }
 
-AVL_NODE *avl_tree_remove_aux(AVL_NODE **root, int value){
-    if(*root == NULL) return NULL; //se cheguei em um cara NULL, logo, não achei o valor
-    else if(value == (*root)->value){ //encontrei o valor desejado
+AVL_NODE *avl_tree_remove_aux(AVL_NODE **root, int value, bool *remove){
+    if(*root == NULL){ 
+        return NULL; //se cheguei em um cara NULL, logo, retorno NULL
+
+    }else if(value == (*root)->value){ //encontrei o valor desejado!
+
+        *remove = true; //coloco minha FLAG para true
 
         if((*root)->left == NULL || (*root)->right == NULL){
-            //1º e 2º caso, qnd nó encontrado é uma folha ou só tem um filho
+            //1º ou 2º caso, qnd nó encontrado é uma folha ou só tem um unico filho respectivamente
             AVL_NODE *aux = *root;
 
             if((*root)->left == NULL){
+                //se meu filho esquerdo for NULL
+                //Logo, toco essa raiz pelo o filho direito dela
                 *root = (*root)->right;
             }else{
+                //se meu filho direito for NULL
+                //Logo, troco essa raiz pelo meu filho esquerdo
                 *root = (*root)->left;
             }
+            //dou free nessa raiz, pelo aux
             free(aux);
             aux = NULL;
 
-        }else{ //caso 3, vc tem ambos os filhos
+        }else{ 
+            //caso 3, o no que preciso retirar tem ambos os filhos
+            //vou trocar ele pelo o maior da esquerda e depois retirar ele
             swap_max_left((*root)->left, (*root), (*root));
         }
         
     }else if(value < (*root)->value){ 
+
         //se minha chave procurada é menor que meu node atual
         //logo, vou para a esquerda
-        (*root)->left = avl_tree_remove_aux(&(*root)->left, value);
+        (*root)->left = avl_tree_remove_aux(&(*root)->left, value, remove);
 
     }else if(value > (*root)->value){
+
         //se minha chave procurada é maior que meu node atual
         //logo, vou para a direita
-        (*root)->right = avl_tree_remove_aux(&(*root)->right, value);
+        (*root)->right = avl_tree_remove_aux(&(*root)->right, value, remove);
     }
 
     if(*root != NULL){
+        //calculo do fator de balanceamento do nó
         int FB = avl_height((*root)->left) - avl_height((*root)->right);
-        if(FB == 2){
-            if(avl_height(()))
+
+        if(FB == 2){ //se meu fator de balanceamento for 2 (rotação direita)
+
+            if((avl_height(((*root)->left)->left) -  avl_height(((*root)->left)->right)) >= 0)
+                //se o fator de balancemanto do meu filho esquero, tiver o mesmo sinal que eu
+                //logo, preciso fazer uma rotação simples para direita
+                *root = avl_rotate_right(*root);
+
+            else
+                //caso tenha sinal oposto, então eu preciso fazer uma rotação dupla
+                //uma rotação esquerda direita
+                *root = avl_rotate_left_right(*root);
         }
+
+        if(FB == -2){
+            //se meu fator de balanceamnto for igual a -2, 
+            //logo, posso fazer uma rotação simples para a esquerda
+            //ou fazer uma rotação dupla, direita_esquerda
+
+            if((avl_height(((*root)->right)->left) -  avl_height(((*root)->right)->right)) <= 0)
+                //se o fator de balancemanto do meu filho direito, tiver o mesmo sinal que eu
+                //logo, preciso fazer uma rotação simples para esquerda
+                *root = avl_rotate_left(*root);
+
+            else
+                //caso tenha sinal oposto, então eu preciso fazer uma rotação dupla
+                //uma rotação direita esquerda
+                *root = avl_rotate_right_left(*root);
+        }
+            
     }
+    return *root;
 }
 
 bool avl_tree_remove(AVL_TREE *T, int value){
     if(T == NULL) return false; //árvore inexistente
-    T->root = avl_remover_aux(&T->root, value);
-    if(T->root == NULL) return false; //se retorna NULL, logo, não consegui tirar esse node, return false
-    return true;
+    bool remove = false; //minha flag, inicializo minha flag como false no começo
+    T->root = avl_tree_remove_aux(&T->root, value, &remove);
+    return remove; //minha resposta é minha flag
 }
