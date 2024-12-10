@@ -115,8 +115,8 @@ static RB_NODE *rb_fixup(RB_NODE *root)
         root = rb_rotate_right(root);
 
     // Dois filhos vermelhos não são permitidos: uma inversão de cores irá
-    // propagar essa aresta vermelha até a raiz, garantindo que a condição
-    // de balanceamento negro perfeito não é violada. 
+    // propagar essa aresta vermelha (possivelmente) até a raiz, garantindo
+    // que a condição de balanceamento negro perfeito não é violada. 
     if (RED(root->left) && RED(root->right))
         rb_invert(root);
 
