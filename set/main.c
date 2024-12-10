@@ -9,7 +9,7 @@ enum set_operations {
     SET_REMOVE
 };
 
-int main(int argc, char **argv)
+int main(void)
 {
     enum set_type type;
     int len_a, len_b;
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
         set_insert(a, n);
     }
     
-    for (int i = 0; i < len_a; i++) {
+    for (int i = 0; i < len_b; i++) {
         int n;
 
         scanf("%d", &n);
@@ -74,6 +74,6 @@ int main(int argc, char **argv)
     }
 
     set_free(&c);
-    set_free(&b);
-    set_free(&a);
+//    set_free(&b);
+//    set_free(&a);
 }

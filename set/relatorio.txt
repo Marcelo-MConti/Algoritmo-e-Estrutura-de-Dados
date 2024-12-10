@@ -41,9 +41,10 @@ assume e mantém a invariante de unicidade das chaves.
 
 # Análise de Complexidade
 
-## Árvores binárias de busca (ABBs)
+## Árvores binárias de busca balanceadas (ABBbal)
 
-Árvores AVL e rubro-negras são árvores binárias de busca, logo, a complexidade
+Árvores AVL e rubro-negras são árvores binárias de busca que se mantém 
+balanceadas de acordo com determinadas regras, logo, a complexidade
 de tempo para a operação busca será a mesma em ambas. A operação busca é
 usada para implementar verificação de pertencimento em um conjunto. Uma 
 implementação convencional, recursiva, de busca em ABB consiste de uma
@@ -74,11 +75,16 @@ tiver um filho, esse nó é removido da árvore e substituído por seu filho (ca
 Se tiver dois filhos, devemos substituí-lo por um sucessor na árvore, seja esse o
 menor da subárvore direita ou o maior da subárvore esquerda (caso iii).
 
-Nos casos i. e ii., as operações de remoção tem complexidade de tempo constante 
+Nos casos i. e ii., as operações de remoção têm complexidade de tempo constante 
 ao se fixar a posição de remoção. No caso iii., podemos notar que a substituição
 pelo sucessor se dá também em O(1) e que a soma da profundidade do nó a ser removido
 com a altura do seu sucessor na subárvore escolhida deve ser igual à altura da árvore
 original. Portanto, em todos os casos, a complexidade da operação remoção é O(log n).
+
+Também adicionamos a operação clonar, que clona uma ABB em O(n), recursivamente, 
+apresentando a seguinte relação de recorrência:
+
+                                     T(n) = 2T(n/2) + O(1)
 
 A operação interseção entre conjuntos foi implementada de forma "ingênua", pois 
 essa forma é mais eficiente que o método abordado em [1] quando devemos preservar 
@@ -86,13 +92,16 @@ os conjuntos originais: sejam as árvores originais de tamanho n e m, com n > m.
 Percorremos a árvore de menor tamanho, verificando se cada elemento existe na outra
 árvore e, se existir, o inserimos na árvore que irá guardar o resultado da
 interseção. Evidentemente, a complexidade de tempo dessa operação é 
-O(m * (log(n) + log(m))) = O(m * log(n * m)) no pior caso.
+O(m * (log(n) + log(m))) = O(m * log(n * m)) no pior caso, onde o termo m 
+corresponde ao percurso da árvore menor, log(n) à busca na árvore maior e 
+log(m) à inserção na árvore resultante.
 
 A operação união possui uma implementação otimizada para duas árvores do tipo AVL,
 como mencionado a seguir. No entanto, se as duas árvores envolvidas na união não
-forem ambas do tipo AVL, uma implementação "ingênua" é usada: ambas as árvores são
-percorridas, e seus elementos inseridos na árvore que irá guardar o resultado
-da união. A complexidade de tempo dessa operação é da ordem de O((n + m) * log(n + m)). 
+forem ambas do tipo AVL, uma implementação "ingênua" é usada: a árvore de maior
+tamanho é clonada e a árvore de menor tamanho é percorrida, tendo seus elementos
+inseridos na árvore resultante. A complexidade de tempo dessa operação é da ordem 
+de O(n + m * log(n + m)). 
 
 ## Árvores AVL
 
@@ -137,7 +146,8 @@ de k e a raiz da outra árvore o outro filho de k. Após essa inserção, ajuste
 manter o balanceamento da árvore são feitos na volta da recursão, em O(1) cada um.
 
 Uma vez que a operação *join* foi implementada recursivamente, podemos montar a seguinte 
-relação de recorrência:
+relação de recorrência, considerando que as duas árvores envolvidas têm tamanho n para
+simplificar a análise:
 
                                     T(n) = T(n/2) + O(1)
 
@@ -147,7 +157,7 @@ Por sua vez, a operação *split* é definida da seguinte forma: split(T, k) ret
 T1 e T2, onde T1 < k < T2, além de indicar se k estava presente em T ou não. A ideia por trás é
 realizar uma busca de k em T, recursivamente. Na volta da recursão, teremos o resultado da 
 operação *split* no filho do nó atual na direção da busca. Digamos que esse resultado é composto
-de árvores T_a e T_b tais que T_a < k < T_b, que o filho do nó atual que não foi analisado 
+de árvores T_a e T_b tais que T_a < k < T_b, de forma que o filho do nó atual que não foi analisado 
 corresponde à raiz de uma árvore T_c e que o valor do nó atual é dado por A. Se a busca seguiu 
 pela esquerda, então T_c > k, logo devemos realizar a operação join(T_b, A, T_c), guardando o 
 resultado dessa operação como o novo T_b. Analogamente, se a busca seguiu pela direita, então 
@@ -177,12 +187,14 @@ log na base 2:
 Portanto, a complexidade de tempo da operação *split* é da ordem de O((log n)^2).
 
 Por sua vez, a operação união recebe duas ABBs arbitrárias, T1 e T2, e retorna T1 ∪ T2,
-destruindo T1 e T2. Como não queremos que T1 e T2 sejam destruídas na implementação do 
-conjunto, como já mencionado, adicionamos uma operação clonar, que permite clonar uma 
-árvore AVL em O(n), o que é, mais uma vez, evidente dada a relação de recorrência:
+destruindo T1 e T2. A ideia por trás é aplicar a operação *split* em T1 sendo k dado
+pelo valor da raiz de T2. Assim, obtemos duas árvores, T_a e T_b, sendo T_a os 
+elementos de T1 menores que k e T_b os elementos de T1 maiores que k. Aplicamos então,
+recursivamente, a união entre T_a e o filho esquerdo da raiz de T2, bem como a união
+entre T_b e o filho direito de T2, obtendo, assim, duas árvores que podem ser juntadas
+usando a operação *join*. Como não queremos que T1 e T2 sejam destruídas na implementação 
+do conjunto, como já mencionado, devemos clonar as árvores antes de aplicar essa operação. 
 
-                                     T(n) = 2T(n/2) + O(1)
-                                     
 O trabalho realizado pela operação união é proporcional a T(n), dada pela seguinte 
 relação de recorrência, onde o primeiro termo corresponde às chamadas recursivas,
 o segundo termo à operação *split* e o terceiro à operação *join*.
