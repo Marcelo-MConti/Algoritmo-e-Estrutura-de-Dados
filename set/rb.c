@@ -39,6 +39,7 @@ size_t rb_tree_len(RB_TREE *tree)
     return tree->len;
 }
 
+/* Cria um nó, inicialmente vermelho */  
 static RB_NODE *rb_node_new(int value)
 {
     RB_NODE *node = malloc(sizeof *node);
@@ -51,6 +52,7 @@ static RB_NODE *rb_node_new(int value)
     return node;
 }
 
+/* Inverte as cores do nó `node` e de seus filhos */
 static void rb_invert(RB_NODE *node)
 {
     node->is_red = !node->is_red;
@@ -62,6 +64,11 @@ static void rb_invert(RB_NODE *node)
         node->right->is_red = !node->right->is_red;
 }
 
+/*
+ * Roda o nó `node` para a esquerda. Essa função assume que
+ * a operação rotação para a esquerda só será usada quando o 
+ * filho direito tiver aresta incidente vermelha.
+ */
 static RB_NODE *rb_rotate_left(RB_NODE *node)
 {
     RB_NODE *right = node->right;
@@ -75,6 +82,7 @@ static RB_NODE *rb_rotate_left(RB_NODE *node)
     return right;
 }
 
+/* Roda o nó `node` para a direita */
 static RB_NODE *rb_rotate_right(RB_NODE *node)
 {
     RB_NODE *left = node->left;
@@ -88,20 +96,37 @@ static RB_NODE *rb_rotate_right(RB_NODE *node)
     return left;
 }
 
+/* Realiza as correções necessárias para manter as condições
+ * de balanceamento da árvore LLRB, usada na inserção e remoção.
+ * É importante notar que a ordem em que as verificações são feitas
+ * importa, pois a corrigir a violação de uma regra pode causar a
+ * violação de outra regra.
+ */
 static RB_NODE *rb_fixup(RB_NODE *root)
 {
+    // Arestas vermelhas à direita não são permitidas: uma rotação esquerda
+    // irá mover essa aresta para a esquerda.
     if (RED(root->right) && BLACK(root->left))
         root = rb_rotate_left(root);
 
+    // Arestas vermelhas consecutivas não são permitidas: uma rotação direita
+    // irá "mover" uma das arestas para a direita.
     if (RED(root->left) && RED(root->left->left))
         root = rb_rotate_right(root);
 
+    // Dois filhos vermelhos não são permitidos: uma inversão de cores irá
+    // propagar essa aresta vermelha até a raiz, garantindo que a condição
+    // de balanceamento negro perfeito não é violada. 
     if (RED(root->left) && RED(root->right))
         rb_invert(root);
 
     return root;
 }
 
+/* Insere o valor `value` na árvore com raiz em `root`. Atribui `true` a 
+ * `*inserted` caso a inserção tenha sido bem sucedida. A inserção irá falhar
+ * caso um nó com valor `value` já exista na árvore.
+ */
 static RB_NODE *rb_insert_impl(RB_NODE *root, int value, bool *inserted)
 {
     if (!root) {
@@ -133,6 +158,9 @@ bool rb_tree_insert(RB_TREE *tree, int value)
     return inserted;
 }
 
+/* Propaga uma aresta vermelha para o filho esquerdo de `root`.
+ * Usado na remoção.
+ */
 static RB_NODE *rb_propagate_left(RB_NODE *root)
 {
     rb_invert(root);
@@ -147,6 +175,9 @@ static RB_NODE *rb_propagate_left(RB_NODE *root)
     return root;
 }
 
+/* Propaga uma aresta vermelha para o filho direito de `root`.
+ * Usado na remoção.
+ */
 static RB_NODE *rb_propagate_right(RB_NODE *root)
 {
     rb_invert(root);
@@ -159,6 +190,9 @@ static RB_NODE *rb_propagate_right(RB_NODE *root)
     return root;
 }
 
+/* Copia o valor do menor nó da árvore com raiz em `subtree` para o nó `node`. 
+ * Usado na remoção.
+ */
 static void rb_move_min(RB_NODE *node, RB_NODE *subtree)
 {
     RB_NODE *min = subtree;
@@ -169,6 +203,7 @@ static void rb_move_min(RB_NODE *node, RB_NODE *subtree)
     node->value = min->value;
 }
 
+/* Remove um nó com valor `value` da árvore com raiz em `root`, se existir. */ 
 static RB_NODE *rb_remove_impl(RB_NODE *root, int value, bool *removed)
 {
     if (!root)
@@ -179,6 +214,11 @@ static RB_NODE *rb_remove_impl(RB_NODE *root, int value, bool *removed)
     if (value == root->value) {
         RB_NODE *orphan = NULL;
 
+        // Essa mesma função trata todos os casos: a flag remove_min_right é
+        // usada para que passemos a buscar o menor nó da direita para removê-lo,
+        // em vez do nó que o usuário queria remover originalmente, uma vez que
+        // esse nó (o menor da direita) já foi copiado para a posição do nó com
+        // o valor a ser removido.
         if (root->right && root->left) {
             rb_move_min(root, root->right);
             remove_min_right = true;
@@ -199,6 +239,7 @@ static RB_NODE *rb_remove_impl(RB_NODE *root, int value, bool *removed)
         }
     }
 
+    // `root` pode se tornar `NULL` após a remoção efetuada acima
     if (!root)
         return NULL;
 
@@ -206,6 +247,8 @@ static RB_NODE *rb_remove_impl(RB_NODE *root, int value, bool *removed)
         if (remove_min_right)
             value = root->value;
 
+        // Caso haja uma aresta vermelha à esquerda e a busca deve prosseguir à direita,
+        // devemos "aproveitar" essa aresta, realizando uma rotação para a direita.
         if (RED(root->left))
             root = rb_rotate_right(root);
 
@@ -232,6 +275,7 @@ bool rb_tree_remove(RB_TREE *tree, int value)
 
     tree->root = rb_remove_impl(tree->root, value, &removed);
 
+    // A raiz pode não existir mais após uma remoção
     if (tree->root)
         tree->root->is_red = false;
 
@@ -241,6 +285,9 @@ bool rb_tree_remove(RB_TREE *tree, int value)
     return removed;
 }
 
+/* Realiza uma busca por `value` na árvore com raiz em `root`. Retorna o nó
+ * caso seja encontrado, caso contrário, retorna `NULL`.
+ */
 static RB_NODE *rb_search_impl(RB_NODE *root, int value)
 {
     if (!root)
