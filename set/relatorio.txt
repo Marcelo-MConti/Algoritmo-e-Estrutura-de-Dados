@@ -80,6 +80,20 @@ pelo sucessor se dá também em O(1) e que a soma da profundidade do nó a ser r
 com a altura do seu sucessor na subárvore escolhida deve ser igual à altura da árvore
 original. Portanto, em todos os casos, a complexidade da operação remoção é O(log n).
 
+A operação interseção entre conjuntos foi implementada de forma "ingênua", pois 
+essa forma é mais eficiente que o método abordado em [1] quando devemos preservar 
+os conjuntos originais: sejam as árvores originais de tamanho n e m, com n > m.
+Percorremos a árvore de menor tamanho, verificando se cada elemento existe na outra
+árvore e, se existir, o inserimos na árvore que irá guardar o resultado da
+interseção. Evidentemente, a complexidade de tempo dessa operação é 
+O(m * log(n) * log(m)) = O(m * log(n + m)) no pior caso.
+
+A operação união possui uma implementação otimizada para duas árvores do tipo AVL,
+como mencionado a seguir. No entanto, se as duas árvores envolvidas na união não
+forem ambas do tipo AVL, uma implementação "ingênua" é usada: ambas as árvores são
+percorridas, e seus elementos inseridos na árvore que irá guardar o resultado
+da união. A complexidade de tempo dessa operação é da ordem de O((n + m) * log(n + m)). 
+
 ## Árvores AVL
 
 A operação rotação esquerda (`avl_rotate_left`) apresenta complexidade de 
@@ -95,48 +109,92 @@ volta da recursão, se for necessário, para corrigir casos de desbalanceamento.
 As verificações e cálculos realizados são efetuados em O(1), logo a complexidade
 de inserção em árvores AVL é O(log n).
 
-A remoção em árvores AVL é idêntica à remoção em ABBs, com o mesmo procedimento para 
-corrigir desbalanceamentos na volta da recursão. Logo, a sua complexidade é O(log n).
+A remoção em árvores AVL é idêntica à remoção em ABBs, adotando o mesmo procedimento 
+usado na inserção para corrigir desbalanceamentos na volta da recursão. 
+Logo, a sua complexidade é O(log n).
 
 Além disso, mencionaremos as operações *join* e *split*, que foram implementadas para
 a árvore AVL. Essas operações permitem a implementação da operação união entre duas 
-árvores de tamanho m e n, sendo n > m, em O(n + m) em vez de O((n + m) * log(n + m)). 
-Ao passo que [1] encontra um limitante superior ainda melhor, não iremos explorar essa
-possibilidade pelos seguintes motivos:
-
- - As técnicas usadas para análise de complexidade necessárias para obtenção desses 
- limitantes melhores são muito complexas para serem abordadas nesse relatório.
-
- - As operações *join* e *split* são destrutivas, logo, considerando as restrições dadas 
- nas especificações do projeto (a operação união deve retornar um novo conjunto, preservando 
- os conjuntos de entrada), se torna necessário clonar as árvores de entrada antes de
- realizar a união. Dessa forma, a melhor complexidade que poderia ser obtida é O(n + m),
- que é a complexidade dessa operação de clonagem.
+árvores em O(n) em vez de O(n * log(n)). Ao passo que [1] encontra um limitante 
+superior ainda melhor, não iremos explorar essa possibilidade, uma vez que as técnicas
+usadas para análise de complexidade necessárias para obtenção desses limitantes melhores 
+são muito complexas para serem abordadas nesse relatório. Além disso, outros fatores
+envolvendo decisões de projeto impedem esses limitantes superiores melhores de serem
+úteis na prática: como as operações *join* e *split* são destrutivas, devemos clonar as
+árvores antes de aplicar essas operações. Também devemos percorrer a árvore após realizar
+uma união para calcular seu tamanho. Dessa forma, a melhor complexidade que poderia ser 
+obtida é O(n).
 
 A operação *join* é definida da seguinte forma: sejam T1 e T2 ABBs e k uma chave tal que
 T1 < k < T2. Ou seja, todos os valores em T1 são menores do que k e todos os valores em T2
 são maiores do que k. join(T1, k, T2) retorna uma árvore T = T1 ∪ {k} ∪ T2. Sua implementação
 é trivial em uma ABB convencional, porém se torna um pouco mais complicada quando se deseja 
 que a árvore resultante se mantenha balanceada. A ideia por trás é percorrer a árvore de maior
-altura dentre T1 e T2, na direção em que as chaves se "aproximam" de k. Ao encontrar um nó, digamos, 
-v, nessa árvore, que possui altura h + 1, onde h é a altura da menor árvore, podemos inserir um nó 
-"k" como filho desse nó encontrado, tornando o filho original de v um dos filhos de k e a raiz da
-outra árvore o outro filho de k. Após essa inserção, ajustes necessários para manter o balanceamento
-da árvore são feitos na volta da recursão, em O(1).
+altura dentre T1 e T2, na direção em que as chaves se "aproximam" de k. Ao encontrar um nó, 
+digamos, v, nessa árvore, que possui altura h + 1, onde h é a altura da menor árvore, podemos 
+inserir um nó "k" como filho desse nó encontrado, tornando o filho original de v um dos filhos 
+de k e a raiz da outra árvore o outro filho de k. Após essa inserção, ajustes necessários para 
+manter o balanceamento da árvore são feitos na volta da recursão, em O(1) cada um.
 
-Uma vez que a operação *join* foi implementada recursivamente, podemos montar a seguinte relação
-de recorrência:
+Uma vez que a operação *join* foi implementada recursivamente, podemos montar a seguinte 
+relação de recorrência:
 
                                     T(n) = T(n/2) + O(1)
 
 Novamente, obtemos pelo Teorema Mestre que a complexidade de tempo da operação *join* é O(log n).
 
-Por sua vez, a operação *split* é definida da seguinte forma: split(T, k) retorna duas árvores, T1
-e T2, onde T1 < k < T2, além de indicar se k estava presente em T ou não. A ideia por trás é
-realizar uma busca de k em T. Os nós percorridos nessa busca efetivamente separam a árvore em duas:
-um conjunto de nós que se encontram à esquerda de algum nó percorrido durante a busca
+Por sua vez, a operação *split* é definida da seguinte forma: split(T, k) retorna duas árvores, 
+T1 e T2, onde T1 < k < T2, além de indicar se k estava presente em T ou não. A ideia por trás é
+realizar uma busca de k em T, recursivamente. Na volta da recursão, teremos o resultado da 
+operação *split* no filho do nó atual na direção da busca. Digamos que esse resultado é composto
+de árvores T_a e T_b tais que T_a < k < T_b, que o filho do nó atual que não foi analisado 
+corresponde à raiz de uma árvore T_c e que o valor do nó atual é dado por A. Se a busca seguiu 
+pela esquerda, então T_c > k, logo devemos realizar a operação join(T_b, A, T_c), guardando o 
+resultado dessa operação como o novo T_b. Analogamente, se a busca seguiu pela direita, então 
+T_c < k, logo devemos atualizar T_a com o resultado de join(T_c, A, T_a).
+O caso base da operação *split* corresponde a um nó nulo ou nó com o valor k.
 
-## LLRB
+Dada a implementação da operação *split*, é possível montar a seguinte relação de recorrência:
+
+                                  T(n) = T(n/2) + O(log n)
+
+Essa relação não pode ser solucionada usando o Teorema Mestre, no entanto, é possível solucioná-la
+de forma aproximada pelo método da substituição, trocando O(log n) por log2(n): tome, por exemplo,
+T(2^3) = T(2^2) + log2(2^3) = T(2) + log2(2^2) + log2(2^3) = T(1) + log2(2) + log2(2^2) + log2(2^3).
+Assumindo que T(1) = 0, podemos deduzir que:
+
+           T(n) = sum(i=1, log2(n), i) = (log2(n) * (log2(n) + 1)) / 2 = O((log n)^2)
+
+Podemos verificar essa igualdade realizando a substituição na relação de recorrência, assumindo 
+log na base 2:
+
+ T(n) = log(n/2) * [log(n/2) + 1] / 2 + log(n) = [log(n/2)]^2 / 2  +  log(n/2) / 2  +  log(n)
+      = (log(n) - log(2))^2 / 2  +  (log(n) - log(2)) / 2  +  log(n)
+      = ([log(n)]^2 - 2log(n) + 1) / 2  +  (log(n) - 1) / 2  +  2log(n) / 2
+      = ([log(n)]^2 + log(n)) / 2 
+      = (log(n) * (log(n) + 1)) / 2
+
+Portanto, a complexidade de tempo da operação *split* é da ordem de O((log n)^2).
+
+Por sua vez, a operação união recebe duas ABBs arbitrárias, T1 e T2, e retorna T1 ∪ T2,
+destruindo T1 e T2. Como não queremos que T1 e T2 sejam destruídas na implementação do 
+conjunto, como já mencionado, adicionamos uma operação clonar, que permite clonar uma 
+árvore AVL em O(n), o que é, mais uma vez, evidente dada a relação de recorrência:
+
+                                     T(n) = 2T(n/2) + O(1)
+                                     
+O trabalho realizado pela operação união é proporcional a T(n), dada pela seguinte 
+relação de recorrência, onde o primeiro termo corresponde às chamadas recursivas,
+o segundo termo à operação *split* e o terceiro à operação *join*.
+
+              T(n) = 2T(n/2) + O((log n)^2) + O(log n) = 2T(n/2) + O((log n)^2)
+
+Essa relação de recorrência pode ser resolvida pelo Teorema Mestre, obtendo O(n) para
+complexidade da operação união entre duas árvores AVL, sendo n o tamanho da maior árvore.
+Portanto, levando em consideração o uso da operação clonar, que é O(n), é possível 
+realizar união entre dois conjuntos em O(n).
+
+## Árvores LLRB
 
 A operação rotação esquerda em LLRBs também consiste de atribuições simples de ponteiros,
 adicionalmente realizando atribuições para as cores dos nós para corrigir as cores após a
@@ -148,18 +206,18 @@ A inserção em LLRBs é idêntica à inserção em ABBs, com a adição de trê
 para corrigir casos que violem as regras de balanceamento da LLRB, portanto apresenta
 a mesma complexidade de tempo. Por sua vez, a remoção possui verificações adicionais 
 para o caso em que a busca prossegue para a direita ou para a esquerda, uma vez que é
-necessário "propagar" as arestas vermelhas para o nó folha a ser removido. Essas verificações,
-novamente, são da ordem de O(1).
+necessário "propagar" as arestas vermelhas para o nó folha a ser removido. Essas 
+verificações e ajustes, novamente, são da ordem de O(1).
 
- ** Detalhes
+## Detalhes
 
 É importante ressaltar que há algumas diferenças mais sutis entre a árvore AVL e a LLRB,
 que não são refletidas nas complexidades de tempo de suas operações: a altura máxima que
 uma árvore AVL pode atingir é logφ(n) ≈ 1,44 * log2(n), enquanto a altura máxima para uma
-árvore LLRB é 2 * log2(n). Ou seja, a árvore AVL é uma opção melhor para casos em que
-buscas são realizadas frequentemente.
+árvore LLRB é 2 * log2(n). Ou seja, a árvore AVL é uma opção melhor que árvores RB para 
+casos em que buscas são realizadas frequentemente.
 
-Referências
+# Referências
 
 [1]: BLELLOCH, G. E.; FERIZOVIC, D.; YIHAN, S. Just Join for Parallel Ordered Sets.
 Disponível em: https://www.cs.cmu.edu/~guyb/papers/BFS16.pdf
