@@ -187,8 +187,13 @@ log na base 2:
 Portanto, a complexidade de tempo da operação *split* é da ordem de O((log n)^2).
 
 Por sua vez, a operação união recebe duas ABBs arbitrárias, T1 e T2, e retorna T1 ∪ T2,
-destruindo T1 e T2. Como não queremos que T1 e T2 sejam destruídas na implementação do 
-conjunto, como já mencionado, devemos clonar as árvores antes de aplicar essa operação. 
+destruindo T1 e T2. A ideia por trás é aplicar a operação *split* em T1 sendo k dado
+pelo valor da raiz de T2. Assim, obtemos duas árvores, T_a e T_b, sendo T_a os 
+elementos de T1 menores que k e T_b os elementos de T1 maiores que k. Aplicamos então,
+recursivamente, a união entre T_a e o filho esquerdo da raiz de T2, bem como a união
+entre T_b e o filho direito de T2, obtendo, assim, duas árvores que podem ser juntadas
+usando a operação *join*. Como não queremos que T1 e T2 sejam destruídas na implementação 
+do conjunto, como já mencionado, devemos clonar as árvores antes de aplicar essa operação. 
 
 O trabalho realizado pela operação união é proporcional a T(n), dada pela seguinte 
 relação de recorrência, onde o primeiro termo corresponde às chamadas recursivas,
