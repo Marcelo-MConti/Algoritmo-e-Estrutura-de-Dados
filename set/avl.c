@@ -513,7 +513,7 @@ void swap_max_left(AVL_NODE *swap, AVL_NODE *root, AVL_NODE *before){
     free(swap);
     swap = NULL;
 }
-
+/*
 AVL_NODE *avl_tree_remove_aux(AVL_NODE **root, int value){
     if(*root == NULL) return NULL; //se cheguei em um cara NULL, logo, não achei o valor
     else if(value == (*root)->value){ //encontrei o valor desejado
@@ -559,3 +559,4 @@ bool avl_tree_remove(AVL_TREE *T, int value){
     if(T->root == NULL) return false; //se retorna NULL, logo, não consegui tirar esse node, return false
     return true;
 }
+*/

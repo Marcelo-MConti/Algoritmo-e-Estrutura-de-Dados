@@ -23,7 +23,4 @@ AVL_TREE *avl_tree_intersection(AVL_TREE **, AVL_TREE **);
 
 void avl_tree_free(AVL_TREE **);
 
-/* XXX: debugging stuff */
-void avl_tree_print(AVL_TREE *, void *);
-
 #endif

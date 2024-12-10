@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <limits.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -9,24 +7,6 @@
 #define BLACK_NONNULL(x) ((x) && !(x)->is_red)
 
 #define RED(x) ((x) && (x)->is_red)
-
-/* XXX: debugging stuff */
-#include <math.h>
-
-#define ABS(x) ((x) < 0 ? -(x) : (x))
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-
-#define N_DIG(x) ceil(log10(ABS(x) + 1)) + ((x) < 0)
-
-#define PR_WS(n)                                                                         \
-    do {                                                                                 \
-        for (int _ = 0; _ < (n); _++)                                                    \
-            fputc(' ', stdout);                                                          \
-    } while (0)
-
-#define COLOR_RED "\x1b[0;39;41m"
-#define COLOR_BLACK "\x1b[0;30;47m"
-#define COLOR_RESET "\x1b[0m"
 
 typedef struct rb_node {
     bool is_red;
@@ -39,9 +19,6 @@ typedef struct rb_node {
 struct rb_tree {
     RB_NODE *root;
     size_t len;
-
-    /* XXX: debugging stuff */
-    int min, max;
 };
 
 RB_TREE *rb_tree_new(void)
@@ -50,9 +27,6 @@ RB_TREE *rb_tree_new(void)
 
     tree->root = NULL;
     tree->len = 0;
-
-    tree->min = INT_MAX;
-    tree->max = INT_MIN;
 
     return tree;
 }
@@ -152,12 +126,6 @@ bool rb_tree_insert(RB_TREE *tree, int value)
 
     tree->root = rb_insert_impl(tree->root, value, &inserted);
     tree->root->is_red = false;
-
-    if (value > tree->max)
-        tree->max = value;
-
-    if (value < tree->min)
-        tree->min = value;
 
     if (inserted)
         tree->len++;
@@ -312,6 +280,29 @@ void rb_tree_traverse(RB_TREE *tree, void (*cb)(int, void *), void *ctx)
     rb_traverse_impl(tree->root, cb, ctx);
 }
 
+RB_NODE *rb_clone_impl(RB_NODE *original)
+{
+    if (!original)
+        return NULL;
+
+    RB_NODE *clone = rb_node_new(original->value);
+
+    clone->left = rb_clone_impl(original->left);
+    clone->right = rb_clone_impl(original->right);
+
+    return clone;
+}
+
+RB_TREE *rb_tree_clone(RB_TREE *tree)
+{
+    RB_TREE *clone = rb_tree_new();
+
+    clone->len = tree->len;
+    clone->root = rb_clone_impl(tree->root);
+
+    return clone;
+}
+
 static void rb_free_impl(RB_NODE *root)
 {
     if (!root)
@@ -332,88 +323,4 @@ void rb_tree_free(RB_TREE **tree)
 
     free(*tree);
     *tree = NULL;
-}
-
-/* XXX: debugging stuff */
-static int rb_height(RB_NODE *root)
-{
-    if (!root)
-        return -1;
-
-    int height_left = rb_height(root->left);
-    int height_right = rb_height(root->right);
-
-    return MAX(height_left, height_right) + 1;
-}
-
-static void rb_print_node(RB_NODE *node, int n_digits)
-{
-    if (!node) {
-        PR_WS(n_digits);
-        return;
-    }
-
-    if (node->is_red)
-        printf(COLOR_RED "%*d" COLOR_RESET, n_digits, node->value);
-    else
-        printf(COLOR_BLACK "%*d" COLOR_RESET, n_digits, node->value);
-}
-
-void rb_tree_print(RB_TREE *tree, void *root)
-{
-    if (!root)
-        root = tree->root;
-
-    if (!tree || !tree->root)
-        return;
-
-    int height = rb_height(root);
-    size_t max_nodes = (1 << (height + 1)) - 1;
-
-    RB_NODE **deque = malloc(sizeof *deque * max_nodes);
-
-    size_t start = 0;
-    size_t end = 0;
-
-    deque[end++] = root;
-
-    int n_digits = MAX(N_DIG(tree->min), N_DIG(tree->max));
-
-    PR_WS(((1 << height) - 1) * n_digits);
-    rb_print_node(root, n_digits);
-
-    fputc('\n', stdout);
-
-    for (int i = 1; i <= height; i++) {
-        size_t new_start = end;
-        size_t new_end = new_start;
-
-        for (int j = 0; j < (end - start + max_nodes) % max_nodes; j++) {
-            RB_NODE *current = deque[(start + j) % max_nodes];
-
-            deque[new_end] = current ? current->left : NULL;
-            new_end = (new_end + 1) % max_nodes;
-
-            deque[new_end] = current ? current->right : NULL;
-            new_end = (new_end + 1) % max_nodes;
-        }
-
-        start = new_start;
-        end = new_end;
-
-        int n_space_around = ((1 << (height - i)) - 1) * n_digits;
-
-        for (int k = 0; k < (end - start + max_nodes) % max_nodes; k++) {
-            if (k == 0)
-                PR_WS(n_space_around);
-            else
-                PR_WS(2 * n_space_around + n_digits);
-
-            rb_print_node(deque[(start + k) % max_nodes], n_digits);
-        }
-
-        fputc('\n', stdout);
-    }
-
-    free(deque);
 }

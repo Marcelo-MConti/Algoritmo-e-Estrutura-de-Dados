@@ -51,6 +51,8 @@ bool set_insert(SET *set, int value)
         case SET_RB:
             return rb_tree_insert(set->impl.rb, value);
     }
+
+    return false;
 }
 
 bool set_remove(SET *set, int value)
@@ -60,11 +62,12 @@ bool set_remove(SET *set, int value)
 
     switch (set->type) {
         case SET_AVL:
-            /* ... */
-            return false;
+            return avl_tree_remove(set->impl.avl, value);
         case SET_RB:
             return rb_tree_remove(set->impl.rb, value);
     }
+
+    return false;
 }
 
 bool set_contains(SET *set, int value)
@@ -75,6 +78,8 @@ bool set_contains(SET *set, int value)
         case SET_RB:
             return rb_tree_search(set->impl.rb, value);
     }
+
+    return false;
 }
 
 static size_t set_len(SET *set)
@@ -85,6 +90,8 @@ static size_t set_len(SET *set)
         case SET_RB:
             return rb_tree_len(set->impl.rb);
     }
+
+    return 0;
 }
 
 static void set_union_cb(int value, void *ctx)
@@ -93,45 +100,67 @@ static void set_union_cb(int value, void *ctx)
     set_insert(set, value);
 }
 
+static void set_clone_from(SET *clone, SET *original)
+{
+    clone->type = original->type;
+    
+    switch (original->type) {
+        case SET_AVL:
+            clone->impl.avl = avl_tree_clone(original->impl.avl);
+            break;
+        case SET_RB:
+            clone->impl.rb = rb_tree_clone(original->impl.rb);
+            break;
+    }
+}
+
 SET *set_union(SET *a, SET *b)
 {
-    /* XXX: retornar uma cópia de a ou b se um deles existir? */
-    if (!a || !b)
+    if (!a && !b)
         return NULL;
+    
+    SET *c = malloc(sizeof *c);
 
-    /* Usa a implementação otimizada, que realiza a 
-     * união em O(n + m * log(n/m + 1)), com n >= m 
-     */
+    if (!a) {
+        set_clone_from(c, b);
+        return c;
+    }
+
+    if (!b) {
+        set_clone_from(c, a);
+        return c;
+    }
+
+    /* Usa a implementação otimizada, que realiza a união em O(n) */
     if (a->type == b->type && a->type == SET_AVL) {
         AVL_TREE *a_clone = avl_tree_clone(a->impl.avl);
         AVL_TREE *b_clone = avl_tree_clone(b->impl.avl);
-
-        SET *c = malloc(sizeof *c);
 
         c->type = SET_AVL;
         c->impl.avl = avl_tree_union(&a_clone, &b_clone);
 
         return c;
     }
+    
+    /* Fixaremos `a` como o conjunto com a menor quantidade de elementos */
+    size_t len_a = set_len(a);
+    size_t len_b = set_len(b);
 
-    /* A implementação ingênua realiza união em O((n + m) * log(n + m)) */
-    SET *c = set_new(a->type);
+    if (len_b < len_a) {
+        SET *tmp = a;
+        a = b;
+        b = tmp;
+    }
 
+    /* A implementação ingênua realiza união em O(n + m * log(n + m)) */
+    set_clone_from(c, b);
+    
     switch (a->type) {
         case SET_AVL:
             avl_tree_traverse(a->impl.avl, set_union_cb, c);
             break;
         case SET_RB:
             rb_tree_traverse(a->impl.rb, set_union_cb, c);
-            break;
-    }
-
-    switch (b->type) {
-        case SET_AVL:
-            avl_tree_traverse(b->impl.avl, set_union_cb, c);
-            break;
-        case SET_RB:
-            rb_tree_traverse(b->impl.rb, set_union_cb, c);
             break;
     }
 
@@ -156,15 +185,15 @@ SET *set_intersection(SET *a, SET *b)
     size_t len_b = set_len(b);
 
     if (len_b < len_a) {
-        SET *c = a;
+        SET *tmp = a;
         a = b;
-        b = c;
+        b = tmp;
     }
 
-    /* Como devemos manter as árvores originais intactas, a implementação de
-     * interseção usando `join` e `split` seria mais ineficiente que a implementação
-     * "ingênua": apenas clonar as árvores já levaria O(n + m), enquanto o algoritmo 
-     * "ingênuo" de interseção leva O(m * log(n) * log(m)) = O(m * log(n + m)), com n >= m.
+    /* Como devemos manter as árvores originais intactas, a implementação de interseção
+     * usando `join` e `split` seria mais ineficiente que a implementação "ingênua":
+     * Apenas clonar as árvores já levaria O(n + m), enquanto o algoritmo "ingênuo" 
+     * de interseção leva O(m * (log(n) + log(m))) = O(m * log(n * m)), com n >= m.
      */
     SET *c = set_new(a->type);
 
@@ -187,6 +216,8 @@ SET *set_intersection(SET *a, SET *b)
 
 void set_print_cb(int value, void *ctx)
 {
+    (void)ctx;
+    
     printf("%d, ", value);
 }
 

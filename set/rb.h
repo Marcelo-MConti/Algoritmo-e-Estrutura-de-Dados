@@ -16,10 +16,9 @@ size_t rb_tree_len(RB_TREE *);
 
 void rb_tree_traverse(RB_TREE *, void (*cb)(int value, void *ctx), void *ctx);
 
-void rb_tree_free(RB_TREE **);
+RB_TREE *rb_tree_clone(RB_TREE *);
 
-/* XXX: debugging stuff */
-void rb_tree_print(RB_TREE *, void *);
+void rb_tree_free(RB_TREE **);
 
 #endif
 

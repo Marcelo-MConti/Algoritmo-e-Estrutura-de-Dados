@@ -1,0 +1,10 @@
+*
+
+!.gitignore
+!/**/
+
+!*.in
+!*.out
+!*.c
+!*.h
+!Makefile
