@@ -338,35 +338,6 @@ bool avl_tree_insert(AVL_TREE *tree, int value)
     return inserted;
 }
 
-static AVL_NODE *avl_remove_impl(AVL_NODE *root, int value, bool *removed)
-{
-    if (!root)
-        return NULL;
-
-    if (value == root->value) {
-        if (root->left && root->right) {
-            /* ... */
-        }
-    }
-
-    return root;
-}
-
-bool avl_tree_remove(AVL_TREE *tree, int value)
-{
-    if (!tree)
-        return false;
-
-    bool removed = false;
-
-    tree->root = avl_remove_impl(tree->root, value, &removed);
-
-    if (removed)
-        tree->len--;
-
-    return removed;
-}
-
 AVL_NODE *avl_search_impl(AVL_NODE *root, int value)
 {
     if (!root)
