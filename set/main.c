@@ -74,6 +74,6 @@ int main(void)
     }
 
     set_free(&c);
-//    set_free(&b);
-//    set_free(&a);
+    set_free(&b);
+    set_free(&a);
 }
