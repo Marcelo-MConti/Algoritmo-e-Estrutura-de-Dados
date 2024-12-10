@@ -99,7 +99,7 @@ static RB_NODE *rb_rotate_right(RB_NODE *node)
 /* Realiza as correções necessárias para manter as condições
  * de balanceamento da árvore LLRB, usada na inserção e remoção.
  * É importante notar que a ordem em que as verificações são feitas
- * importa, pois a corrigir a violação de uma regra pode causar a
+ * importa, pois corrigir a violação de uma regra pode causar a
  * violação de outra regra.
  */
 static RB_NODE *rb_fixup(RB_NODE *root)
