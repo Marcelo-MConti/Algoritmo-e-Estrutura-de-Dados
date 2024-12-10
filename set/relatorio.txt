@@ -72,7 +72,7 @@ Por sua vez, a operação remoção consiste em buscar o valor a ser removido. S
 valor não for encontrado, não há nada a ser feito (caso i). Se o nó correspondente 
 tiver um filho, esse nó é removido da árvore e substituído por seu filho (caso ii).
 Se tiver dois filhos, devemos substituí-lo por um sucessor na árvore, seja esse o
-menor da subárvore direita ou o maior da subárvore direita (caso iii).
+menor da subárvore direita ou o maior da subárvore esquerda (caso iii).
 
 Nos casos i. e ii., as operações de remoção tem complexidade de tempo constante 
 ao se fixar a posição de remoção. No caso iii., podemos notar que a substituição
@@ -86,7 +86,7 @@ os conjuntos originais: sejam as árvores originais de tamanho n e m, com n > m.
 Percorremos a árvore de menor tamanho, verificando se cada elemento existe na outra
 árvore e, se existir, o inserimos na árvore que irá guardar o resultado da
 interseção. Evidentemente, a complexidade de tempo dessa operação é 
-O(m * log(n) * log(m)) = O(m * log(n + m)) no pior caso.
+O(m * (log(n) + log(m))) = O(m * log(n * m)) no pior caso.
 
 A operação união possui uma implementação otimizada para duas árvores do tipo AVL,
 como mencionado a seguir. No entanto, se as duas árvores envolvidas na união não
