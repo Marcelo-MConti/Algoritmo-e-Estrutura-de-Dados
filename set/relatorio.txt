@@ -84,7 +84,7 @@ original. Portanto, em todos os casos, a complexidade da operação remoção é
 Também adicionamos a operação clonar, que clona uma ABB em O(n), recursivamente, 
 apresentando a seguinte relação de recorrência:
 
-                                     T(n) = 2T(n/2) + O(1)
+                            T(n) = 2T(n/2) + O(1)
 
 A operação interseção entre conjuntos foi implementada de forma "ingênua", pois 
 essa forma é mais eficiente que o método abordado em [1] quando devemos preservar 
@@ -146,8 +146,9 @@ de k e a raiz da outra árvore o outro filho de k. Após essa inserção, ajuste
 manter o balanceamento da árvore são feitos na volta da recursão, em O(1) cada um.
 
 Uma vez que a operação *join* foi implementada recursivamente, podemos montar a seguinte 
-relação de recorrência, considerando que as duas árvores envolvidas têm tamanho n para
-simplificar a análise:
+relação de recorrência, considerando que as duas árvores envolvidas têm tamanho n e que o
+caso base se daria, no pior caso, após ter percorrido uma altura proporcional à altura da 
+maior árvore para simplificar a análise:
 
                                     T(n) = T(n/2) + O(1)
 
