@@ -8,33 +8,58 @@
         (x)->height = MAX(avl_height((x)->left), avl_height((x)->right)) + 1;            \
     } while (0)
 
+//node da arvore
 typedef struct avl_node {
+    //valor armazenado no node
     int value;
+
+    //altura no node, usado para balanceamento
     int height;
 
+    //ponteiros para seus filhos esq e dir
     struct avl_node *left;
     struct avl_node *right;
 } AVL_NODE;
 
+
+//estrutura para dividir a AVL em duas partes
 typedef struct avl_split {
+
+    //as duas arvores resultantes da divisão
     AVL_NODE *left;
     AVL_NODE *right;
 
+    //indica se o valor utilizado para dividir estava presente
     bool present;
 } AVL_SPLIT;
 
+//usado na divisão da arvore, e pegar o maior valor
 typedef struct avl_split_last {
+    //arvore resultante apos a remoção do maior valor
     AVL_NODE *root;
+
+    //contem o maior valor removido
     int value;
 } AVL_SPLIT_LAST;
 
+
+//representa a nossa arvore AVL
 struct avl_tree {
+
+    //ponteiro para a raiz dessa arvore
     AVL_NODE *root;
+
+    //numero de nos dessa arvore
     size_t len;
 };
 
 void avl_free_impl(AVL_NODE *);
 
+/*
+criar uma arvore AVL vazia
+Inicializando sua raiz como NULL
+e seu tamanho como zero
+*/
 AVL_TREE *avl_tree_new(void)
 {
     AVL_TREE *tree = malloc(sizeof *tree);
@@ -45,6 +70,11 @@ AVL_TREE *avl_tree_new(void)
     return tree;
 }
 
+/*
+criar um novo node na AVL com o valor fornecido
+incializando os ponteiros dos filhos para NULL
+e sua altura como 0
+*/
 static AVL_NODE *avl_node_new(int value)
 {
     AVL_NODE *node = malloc(sizeof *node);
@@ -59,6 +89,11 @@ static AVL_NODE *avl_node_new(int value)
     return node;
 }
 
+
+/*
+Retorna a altura desse nó
+se for  NULL, retorna -1
+*/
 static int avl_height(AVL_NODE *node)
 {
     if (!node)
@@ -67,6 +102,16 @@ static int avl_height(AVL_NODE *node)
     return node->height;
 }
 
+
+/////FUNÇÕES DE ROTAÇÃO/////
+
+/*
+Rotação simples para a esquerda:
+filho direito do node que está desbalanceado
+se torna o novo node raiz, trocando seu filho esquerdo
+com o seu pai que estava desbalanceado.
+Por fim, atualiza as alturas dos nos envolvidos
+*/
 static AVL_NODE *avl_rotate_left(AVL_NODE *node)
 {
     AVL_NODE *right = node->right;
@@ -80,6 +125,13 @@ static AVL_NODE *avl_rotate_left(AVL_NODE *node)
     return right;
 }
 
+/*
+Rotação Simples para a Direita:
+Faz o filho esquerdo do node se tornar o novo
+node raiz, de forma parecida com a rotação 
+esquerda simples.
+Por fim, atualiza as alturas
+*/
 static AVL_NODE *avl_rotate_right(AVL_NODE *node)
 {
     AVL_NODE *left = node->left;
@@ -93,18 +145,37 @@ static AVL_NODE *avl_rotate_right(AVL_NODE *node)
     return left;
 }
 
+
+/*
+Rotação dupla esquerda direita:
+Uma rotação simples para a esquerda primeiro
+seguido de uma rotação simples para a direita
+resolvendo o desbalanceamento no lado dirieto do node
+*/
 static AVL_NODE *avl_rotate_left_right(AVL_NODE *node)
 {
     node->left = avl_rotate_left(node->left);
     return avl_rotate_right(node);
 }
 
+
+/*
+Rotação dupla direita esquerda:
+Uma rotação simples para a direita primeiro
+seguido de uma rotação simples para a esquerda
+resolvendo o desbalanceamento no lado esquerdo do node
+*/
 static AVL_NODE *avl_rotate_right_left(AVL_NODE *node)
 {
     node->right = avl_rotate_right(node->right);
     return avl_rotate_left(node);
 }
 
+/*
+Junta duas árvores AVL com um valor intermediario k como node raiz
+depois chama duas funções auxiliares, avl_join_left() e avl_join_right()
+que vão garantir que a arvore resultante esteja balanceada, ajustando os nodes
+*/
 static AVL_NODE *avl_join_right(AVL_NODE *left, int k, AVL_NODE *right)
 {
     if (avl_height(left->right) <= avl_height(right) + 1) {
@@ -137,6 +208,13 @@ static AVL_NODE *avl_join_right(AVL_NODE *left, int k, AVL_NODE *right)
     return left;
 }
 
+/*
+Se a altura do filho esquerdo de right diferir de no max 1 unidade
+maior que o left, cria um novo nó com valor k, que tem left como filho
+esquerdo, e o right como filho direito, esse node é anexado como filho 
+esquerdo de right.
+Verifica o balancemanto e faz as devidas rotações
+*/
 static AVL_NODE *avl_join_left(AVL_NODE *left, int k, AVL_NODE *right)
 {
     if (avl_height(right->left) <= avl_height(left) + 1) {
@@ -169,11 +247,18 @@ static AVL_NODE *avl_join_left(AVL_NODE *left, int k, AVL_NODE *right)
     return right;
 }
 
+/*
+junta duas subarvores AVL com um valor intermediario k como raiz
+e garante que o resultando esteja balanceado
+*/
 static AVL_NODE *avl_join(AVL_NODE *left, int k, AVL_NODE *right)
 {
     if (avl_height(left) > avl_height(right) + 1)
+        //se lefr for mais alta
         return avl_join_right(left, k, right);
+
     else if (avl_height(right) > avl_height(left) + 1)
+        //se right for mais alta
         return avl_join_left(left, k, right);
 
     AVL_NODE *node = avl_node_new(k);
@@ -186,6 +271,11 @@ static AVL_NODE *avl_join(AVL_NODE *left, int k, AVL_NODE *right)
     return node;
 }
 
+/*
+Dividi a arvore em duas, Uma subávore esquerda com valores menores que k
+e outra subarvore direita com valores maiores que k e retorna se o valor k
+estava presente na árvore original
+*/
 static AVL_SPLIT avl_split(AVL_NODE *root, int k)
 {
     if (!root)
@@ -215,6 +305,9 @@ static AVL_SPLIT avl_split(AVL_NODE *root, int k)
     }
 }
 
+
+//Remove e retorna o maior valor da árvore 
+//utilizado na operação join_no_key
 static AVL_SPLIT_LAST avl_split_last(AVL_NODE *root)
 {
     if (!root->right) {
@@ -231,6 +324,11 @@ static AVL_SPLIT_LAST avl_split_last(AVL_NODE *root)
     return last;
 }
 
+
+/*
+Junta duas subarvores AVL, left e right sem valor intermediario
+utilizado em operações que um node intermediario não é necessario
+*/
 static AVL_NODE *avl_join_no_key(AVL_NODE *left, AVL_NODE *right)
 {
     if (!left)
@@ -241,6 +339,11 @@ static AVL_NODE *avl_join_no_key(AVL_NODE *left, AVL_NODE *right)
     return avl_join(last.root, last.value, right);
 }
 
+
+/*
+Realiaza a união de duas arvores AVL, utilizando a operação
+avl_split() para dividir e combinar de forma recursiva as árvores
+*/
 static AVL_NODE *avl_union(AVL_NODE *left, AVL_NODE *right)
 {
     if (!left)
@@ -256,6 +359,10 @@ static AVL_NODE *avl_union(AVL_NODE *left, AVL_NODE *right)
     return avl_join(union_left, right->value, union_right);
 }
 
+/*
+Operação de encontrar a interseção de duas arvores AVL
+descarta os valores que não estão presentees em ambas as árvores
+*/
 static AVL_NODE *avl_intersection(AVL_NODE *left, AVL_NODE *right)
 {
     if (!left) {
@@ -285,21 +392,27 @@ static AVL_NODE *avl_intersection(AVL_NODE *left, AVL_NODE *right)
     }
 }
 
+
 static AVL_NODE *avl_insert_impl(AVL_NODE *root, int value, bool *inserted)
 {
+    //caso a arvore esteja, vazia ele cria e coloca o novo node
     if (!root) {
         root = avl_node_new(value);
         *inserted = true;
     }
 
+    //Localiza a posição do novo valor
     if (value < root->value) {
         root->left = avl_insert_impl(root->left, value, inserted);
     } else if (value > root->value) {
         root->right = avl_insert_impl(root->right, value, inserted);
     }
 
+    //atualiza a altura da arvore
     UPDATE_HEIGHT(root);
 
+    //Verifica o fator de balancemaneto e realiza as rotações necessarias
+    //para que a arvore permaneça balanceada
     int bf = avl_height(root->left) - avl_height(root->right);
 
     if (bf == -2) {
@@ -323,6 +436,13 @@ static AVL_NODE *avl_insert_impl(AVL_NODE *root, int value, bool *inserted)
     return root;
 }
 
+
+/*
+insere um valor na arvore AVL, utilizando a função
+avl_insert_impl() para localizar a posição correta do node
+e ajustar o balanceamento na árvore, atualizando sua altura
+no final
+*/
 bool avl_tree_insert(AVL_TREE *tree, int value)
 {
     if (!tree)
@@ -352,11 +472,16 @@ AVL_NODE *avl_search_impl(AVL_NODE *root, int value)
         return avl_search_impl(root->right, value);
 }
 
+/*
+Procura um valor na árvore AVL, utiliza avl_search_impl()
+para encontrar de forma recursiva
+*/
 bool avl_tree_search(AVL_TREE *tree, int value)
 {
     return avl_search_impl(tree->root, value);
 }
 
+//retorna o tamanho da árvore
 size_t avl_tree_len(AVL_TREE *tree)
 {
     if (!tree)
@@ -365,6 +490,11 @@ size_t avl_tree_len(AVL_TREE *tree)
     return tree->len;
 }
 
+
+/*
+Realiza um percurso em ordem na AVL realizando a operação (cb)
+para cada valor encontrado
+*/
 void avl_traverse_impl(AVL_NODE *root, void (*cb)(int value, void *ctx), void *ctx)
 {
     if (!root)
@@ -375,6 +505,8 @@ void avl_traverse_impl(AVL_NODE *root, void (*cb)(int value, void *ctx), void *c
     avl_traverse_impl(root->right, cb, ctx);
 }
 
+//Utiliza a função avl_traverse_impl() para percorrer a arvore e realizar
+//a operação callback (cb) na arvore
 void avl_tree_traverse(AVL_TREE *tree, void (*cb)(int value, void *ctx), void *ctx)
 {
     if (!tree)
@@ -383,6 +515,11 @@ void avl_tree_traverse(AVL_TREE *tree, void (*cb)(int value, void *ctx), void *c
     avl_traverse_impl(tree->root, cb, ctx);
 }
 
+
+/*
+função para clonar uma arvore AVL, sendo avl_clone_impl()
+utilizando para clonar de forma recursiva os nodes
+*/
 AVL_NODE *avl_clone_impl(AVL_NODE *original)
 {
     if (!original)
@@ -396,6 +533,10 @@ AVL_NODE *avl_clone_impl(AVL_NODE *original)
     return clone;
 }
 
+/*
+Usado para atualizar o comprimento (len) da árvore durante um percurso
+incrementando o contador de tamanho durante o percurso
+*/
 static void avl_update_len_cb(int value, void *ctx)
 {
     (void)value;
@@ -404,6 +545,7 @@ static void avl_update_len_cb(int value, void *ctx)
     *new_len = *new_len + 1;
 }
 
+//cria a copia da AVL e instancia a avl_clone_impl()
 AVL_TREE *avl_tree_clone(AVL_TREE *tree)
 {
     AVL_TREE *clone = avl_tree_new();
@@ -414,6 +556,13 @@ AVL_TREE *avl_tree_clone(AVL_TREE *tree)
     return clone;
 }
 
+
+/*
+Calcula a UNIAO de duas Arvores AVL, utilizando a avl_union()
+modificando o ponteiro (a), depois de colocar a resposta em 
+result, libera a memoria de ambas as arvores, depois percorre 
+a arvore para calcular len
+*/
 AVL_TREE *avl_tree_union(AVL_TREE **a, AVL_TREE **b)
 {
     (*a)->root = avl_union((*a)->root, (*b)->root);
@@ -431,9 +580,15 @@ AVL_TREE *avl_tree_union(AVL_TREE **a, AVL_TREE **b)
     return result;
 }
 
+
+/*
+Modifica a primeira arvore (a) para conter os elementos da interseção e
+librera a memoria da segunda arvore (b)
+*/
 AVL_TREE *avl_tree_intersection(AVL_TREE **a, AVL_TREE **b)
 {
     (*a)->root = avl_intersection((*a)->root, (*b)->root);
+    //calcula a interseção das duas arvores, atulizando (a)
 
     AVL_TREE *result = *a;
 
@@ -443,11 +598,14 @@ AVL_TREE *avl_tree_intersection(AVL_TREE **a, AVL_TREE **b)
     *b = NULL;
 
     result->len = 0;
+    //percorre a arvore resultante para calcular o valor de len
     avl_tree_traverse(result, avl_update_len_cb, &result->len);
 
+    //retorna a arvore resultante da interseção
     return result;
 }
 
+//operação recursiva para apagar a arvore
 void avl_free_impl(AVL_NODE *root)
 {
     if (!root)
@@ -459,6 +617,7 @@ void avl_free_impl(AVL_NODE *root)
     free(root);
 }
 
+//função para apagar a arvore
 void avl_tree_free(AVL_TREE **tree)
 {
     if (!tree || !*tree)
@@ -587,5 +746,7 @@ bool avl_tree_remove(AVL_TREE *T, int value){
     if(T == NULL) return false; //árvore inexistente
     bool remove = false; //minha flag, inicializo minha flag como false no começo
     T->root = avl_tree_remove_aux(&T->root, value, &remove);
+
+    if (remove) T->len--;
     return remove; //minha resposta é minha flag
 }
