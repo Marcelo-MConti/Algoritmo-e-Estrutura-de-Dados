@@ -15,6 +15,12 @@
 \title{Projeto \RN{2} --- Operações sobre conjuntos (sets)}
 \date{\today}
 
+\author{
+	João Gabriel Araújo de Bastos \\ 15462633
+	\and
+	Marcelo Martins Conti \\ 15474629
+}
+
 \begin{document}
 
 \maketitle
@@ -57,6 +63,17 @@ em cada nó da árvore correspondem diretamente às chaves usadas para ordenaç�
 da ABB. Caso não houvesse essa correspondência, seria necessário adaptar os
 algoritmos \textit{join} e \textit{split} apresentados. Além disso, nossa 
 implementação assume e mantém a invariante de unicidade das chaves.
+
+Considerando as estruturas de dados estudadas, uma outra possível estrutura
+de dados para implementação do conjunto seria a lista. Embora uma lista sequencial
+ordenada permitisse que as operações união e interseção fossem realizadas 
+em $O(n)$ e que a busca fosse realizada em $O(\log n)$, sendo $n$ o tamanho 
+do maior conjunto, isso seria em detrimento das operações inserção e remoção,
+que seriam $O(n)$ no pior caso, devido aos deslocamentos. Já na lista encadeada
+e na lista sequencial não ordenada a busca seria $O(n)$, enquanto a operação 
+interseção seria $O(n^2)$ no pior caso. Portanto, uma ABB balanceada é a melhor 
+estrutura de dados dentre as que foram estudadas para a implementação das operações
+de um conjunto.
 
 \section*{Análise de Complexidade}
 
@@ -116,7 +133,7 @@ devemos preservar os conjuntos originais: sejam as árvores originais de tamanho
 e $m$, com $n > m$. Percorremos a árvore de menor tamanho, verificando se cada 
 elemento existe na outra árvore e, se existir, o inserimos na árvore que irá guardar 
 o resultado da interseção. Evidentemente, a complexidade de tempo dessa operação é 
-$O(m \log{n} + \log{m}) = O(m \log{n \cdot m})$ no pior caso, onde o termo $m$ 
+$O(m (\log{n} + \log{m})) = O(m \log{n \cdot m})$ no pior caso, onde o termo $m$ 
 corresponde à complexidade do percurso da árvore menor, $\log n$ à busca na árvore 
 maior e $\log m$ à inserção na árvore resultante.
 
