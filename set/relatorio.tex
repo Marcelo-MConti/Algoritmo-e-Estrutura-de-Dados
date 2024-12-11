@@ -15,12 +15,6 @@
 \title{Projeto \RN{2} --- Operações sobre conjuntos (sets)}
 \date{\today}
 
-\author{
-	João Gabriel Araújo de Bastos \\ 15462633
-	\and
-	Marcelo Martins Conti \\ 15474629
-}
-
 \begin{document}
 
 \maketitle
@@ -181,7 +175,7 @@ e todos os valores em $T_2$ são maiores do que $k$. $\textrm{join}(T_1, k, T2)$
 árvore $T = T_1 \cup \{k\} \cup T_2$. Sua implementação é trivial em uma ABB convencional, 
 porém se torna um pouco mais complicada quando se deseja que a árvore resultante se mantenha 
 balanceada. A ideia por trás é percorrer a árvore de maior altura dentre $T_1$ e $T_2$, na 
-direção em que as chaves se "aproximam" de $k$. Ao encontrar um nó, digamos, $v$, nessa árvore,
+direção em que as chaves se ``aproximam'' de $k$. Ao encontrar um nó, digamos, $v$, nessa árvore,
 que possui altura $h + 1$, onde $h$ é a altura da menor árvore, podemos inserir um nó $k$ 
 como filho desse nó encontrado, tornando o filho original de $v$ um dos filhos de $k$ e a 
 raiz da outra árvore o outro filho de $k$. Após essa inserção, ajustes necessários para 
@@ -279,7 +273,7 @@ A inserção em LLRBs é idêntica à inserção em ABBs, com a adição de trê
 para corrigir casos que violem as regras de balanceamento da LLRB, portanto apresenta
 a mesma complexidade de tempo. Por sua vez, a remoção possui verificações adicionais 
 para o caso em que a busca prossegue para a direita ou para a esquerda, uma vez que é
-necessário "propagar" as arestas vermelhas para o nó folha a ser removido. Essas 
+necessário ``propagar'' as arestas vermelhas para o nó folha a ser removido. Essas 
 verificações e ajustes, novamente, são da ordem de $O(1)$.
 
 \subsection*{Detalhes}
