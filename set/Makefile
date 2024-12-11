@@ -19,7 +19,7 @@ clean:
 	rm -f $(OBJ) $(OUT)
 
 dist:
-	zip -r ../$(OUT).zip . -i relatorio.pdf Makefile '*.c' '*.h' '*.in' '*.out'
+	zip -r ../$(OUT).zip . -i relatorio.pdf Makefile tests/Makefile '*.c' '*.h' '*.in' '*.out'
 
 .c.o:
 	$(CC) $(DEFCFLAGS) -c $< -o $@
